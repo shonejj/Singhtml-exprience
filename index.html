@@ -143,7 +143,7 @@ input[type=checkbox]{accent-color:var(--amber);width:18px;height:18px}
 /* touch */
 #touch{display:none}
 #touch.on{display:block}
-#touch .stick{position:absolute;left:calc(var(--tpad,3vw) + var(--sal));bottom:calc(5vh + var(--sab));width:calc(150px*var(--ts));height:calc(150px*var(--ts));border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.18);pointer-events:auto;opacity:var(--to)}
+#touch .stick{position:absolute;left:calc(var(--tpad,3vw) + var(--sal));bottom:calc(16px + var(--sab));width:calc(150px*var(--ts));height:calc(150px*var(--ts));border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.18);pointer-events:auto;opacity:var(--to)}
 #touch .stick i{position:absolute;left:50%;top:50%;width:40%;height:40%;margin:-20% 0 0 -20%;border-radius:50%;background:rgba(255,181,71,.55)}
 #touch .tb{position:absolute;width:calc(58px*var(--ts));height:calc(58px*var(--ts));border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;
   font-size:calc(11px*var(--ts));display:flex;align-items:center;justify-content:center;pointer-events:auto;opacity:var(--to);letter-spacing:.05em;text-align:center;line-height:1}
@@ -151,6 +151,7 @@ input[type=checkbox]{accent-color:var(--amber);width:18px;height:18px}
 #touch .tb.sm{width:calc(44px*var(--ts));height:calc(44px*var(--ts));font-size:calc(10px*var(--ts))}
 #touch .cam{position:absolute;right:0;top:0;width:55%;height:100%;pointer-events:auto}
 body.lefty #touch .stick{left:auto;right:calc(var(--tpad,3vw) + var(--sar))}
+body.touchui #weap{bottom:auto;top:calc(56px + var(--sat))}body.touchui #weap .bar{display:none}
 #rot{position:absolute;inset:0;background:#000;color:var(--amber);display:none;align-items:center;justify-content:center;text-align:center;z-index:50;padding:20px;pointer-events:auto}
 #loading .bar{width:min(420px,70vw);height:6px}
 #loading .tip{margin-top:14px;color:var(--mute);font-size:13px;max-width:560px;text-align:center}
@@ -185,20 +186,20 @@ body.lefty #touch .stick{left:auto;right:calc(var(--tpad,3vw) + var(--sar))}
 <div class="layer" id="touch">
   <div class="cam" id="tcam"></div>
   <div class="stick" id="tstick"><i></i></div>
-  <div class="tb" data-a="fire" style="right:calc(26px + var(--sar));bottom:calc(120px*var(--ts) + 6vh + var(--sab))">FIRE</div>
-  <div class="tb" data-a="jump" style="right:calc(100px*var(--ts) + 26px + var(--sar));bottom:calc(5vh + var(--sab))">JUMP</div>
-  <div class="tb" data-a="dodge" style="right:calc(26px + var(--sar));bottom:calc(5vh + var(--sab))">ROLL</div>
-  <div class="tb" data-a="interact" style="right:calc(170px*var(--ts) + 26px + var(--sar));bottom:calc(70px*var(--ts) + 5vh + var(--sab))">USE</div>
-  <div class="tb" data-a="scan" style="right:calc(90px*var(--ts) + 26px + var(--sar));bottom:calc(80px*var(--ts) + 6vh + var(--sab))">SCAN</div>
-  <div class="tb sm" data-a="burst" style="right:calc(26px + var(--sar));bottom:calc(200px*var(--ts) + 7vh + var(--sab))">BURST</div>
-  <div class="tb sm" data-a="melee" style="right:calc(80px*var(--ts) + 26px + var(--sar));bottom:calc(170px*var(--ts) + 7vh + var(--sab))">MELEE</div>
-  <div class="tb sm" data-a="sprint" data-toggle="1" style="left:calc(170px*var(--ts) + 3vw + var(--sal));bottom:calc(5vh + var(--sab))">SPRINT</div>
-  <div class="tb sm" data-a="crouch" data-toggle="1" style="left:calc(170px*var(--ts) + 3vw + var(--sal));bottom:calc(60px*var(--ts) + 6vh + var(--sab))">CROUCH</div>
+  <div class="tb" data-a="fire" style="right:calc(20px + var(--sar));bottom:calc(84px*var(--ts) + 16px + var(--sab))">FIRE</div>
+  <div class="tb" data-a="jump" style="right:calc(70px*var(--ts) + 20px + var(--sar));bottom:calc(16px + var(--sab))">JUMP</div>
+  <div class="tb" data-a="dodge" style="right:calc(20px + var(--sar));bottom:calc(16px + var(--sab))">ROLL</div>
+  <div class="tb" data-a="interact" style="right:calc(140px*var(--ts) + 20px + var(--sar));bottom:calc(40px*var(--ts) + 16px + var(--sab))">USE</div>
+  <div class="tb" data-a="scan" style="right:calc(70px*var(--ts) + 20px + var(--sar));bottom:calc(84px*var(--ts) + 16px + var(--sab))">SCAN</div>
+  <div class="tb sm" data-a="burst" style="right:calc(24px + var(--sar));bottom:calc(158px*var(--ts) + 16px + var(--sab))">BURST</div>
+  <div class="tb sm" data-a="melee" style="right:calc(76px*var(--ts) + 24px + var(--sar));bottom:calc(158px*var(--ts) + 16px + var(--sab))">MELEE</div>
+  <div class="tb sm" data-a="sprint" data-toggle="1" style="left:calc(170px*var(--ts) + 3vw + var(--sal));bottom:calc(16px + var(--sab))">SPRINT</div>
+  <div class="tb sm" data-a="crouch" data-toggle="1" style="left:calc(170px*var(--ts) + 3vw + var(--sal));bottom:calc(56px*var(--ts) + 22px + var(--sab))">CROUCH</div>
   <div class="tb sm" data-a="pause" style="left:calc(14px + var(--sal));top:calc(64px + var(--sat))">❚❚</div>
   <div class="tb sm" data-a="camera" style="left:calc(64px*var(--ts) + 14px + var(--sal));top:calc(64px + var(--sat))">CAM</div>
-  <div class="tb sm" data-a="weapon" style="right:calc(26px + var(--sar));top:calc(110px + var(--sat))">WPN</div>
-  <div class="tb sm" data-a="lamp" style="right:calc(80px*var(--ts) + 26px + var(--sar));top:calc(110px + var(--sat))">LAMP</div>
-  <div class="tb sm" data-a="lock" style="right:calc(134px*var(--ts) + 26px + var(--sar));top:calc(110px + var(--sat))">LOCK</div>
+  <div class="tb sm" data-a="weapon" style="right:calc(24px + var(--sar));top:calc(96px + var(--sat))">WPN</div>
+  <div class="tb sm" data-a="lamp" style="right:calc(54px*var(--ts) + 24px + var(--sar));top:calc(96px + var(--sat))">LAMP</div>
+  <div class="tb sm" data-a="lock" style="right:calc(108px*var(--ts) + 24px + var(--sar));top:calc(96px + var(--sat))">LOCK</div>
 </div>
 <div class="layer" id="toast"></div>
 <div class="layer" id="cine"><div id="cinetext"></div></div>
@@ -481,7 +482,7 @@ const Input = {
     lx += this.touch.mx * .006; ly += this.touch.my * .006; this.touch.mx = this.touch.my = 0;
     if (this.padAxes) { lx += this.padAxes[2] * .05; ly += this.padAxes[3] * .04; }
     lx *= v.sens * (v.invertX ? -1 : 1); ly *= v.sens * (v.invertY ? -1 : 1); this.look[0] = lx; this.look[1] = ly;
-    $('touch').classList.toggle('on', this.isTouch && Game.state === 'play' && this.device === 'touch');
+    const tOn = this.isTouch && Game.state === 'play' && this.device === 'touch'; $('touch').classList.toggle('on', tOn); document.body.classList.toggle('touchui', tOn);
   },
   endFrame() { this.pressed.clear(); this.mouse.wheel = 0; },
   glyph(a) {
@@ -3415,7 +3416,7 @@ const Game = {
       // music intensity
       if (!Boss.active && this.state === 'play') Audio2.setMode(Enemies.threat ? 'combat' : 'explore');
       // discovery of points of interest
-      if (S) { const disc = S.disc[S.region] || (S.disc[S.region] = []); for (const poi of World.region.pois) if (!disc.includes(poi.n) && dist2(p.x, p.z, poi.x, poi.z) < 400) { disc.push(poi.n); UI.toast('Discovered: ' + poi.n); } }
+      if (S && this.time - (this.playAt || 0) > 5) { const disc = S.disc[S.region] || (S.disc[S.region] = []); for (const poi of World.region.pois) if (!disc.includes(poi.n) && dist2(p.x, p.z, poi.x, poi.z) < 400) { disc.push(poi.n); UI.toast('Discovered: ' + poi.n); } }
       if (S && Math.floor(this.time) !== Math.floor(this.time - dt)) this.pollQuests();
     }
     for (let i = this.dynLights.length - 1; i >= 0; i--) { this.dynLights[i].ttl -= dt; if (this.dynLights[i].ttl <= 0) this.dynLights.splice(i, 1); }
@@ -3445,10 +3446,10 @@ const Game = {
     const l = Math.hypot(...sd); sd = sd.map(v => v / l);
     const dusk = smooth(clamp(1 - Math.abs(el) / .3, 0, 1)) * day;
     const H = k => hex(P[k]); const overcast = (W.cloud || 0) * .5 + (W.fog || 0) * .3 + (W.dust || 0) * .4;
-    let sunCol = mixc(mixc(H('moon'), H('sun'), day), H('dusk'), dusk * .7); sunCol = scalec(sunCol, (day ? 1.05 : .35) * (1 - overcast * .55));
+    let sunCol = mixc(mixc(H('moon'), H('sun'), day), H('dusk'), dusk * .7); sunCol = scalec(sunCol, lerp(.55, 1.05, day) * (1 - overcast * .5));
     const skyTop = mixc(H('nightTop'), H('dayTop'), day), skyHor = mixc(mixc(H('nightHor'), H('dayHor'), day), H('dusk'), dusk * .4);
     let fogCol = mixc(mixc(H('nightFog'), H('dayFog'), day), H('dusk'), dusk * .3); if (W.dust) fogCol = mixc(fogCol, scalec(R0.dustCol, .9), W.dust * .5);
-    const amb = scalec(H('amb'), .55 + day * .45), gnd = scalec(H('gnd'), .5 + day * .5);
+    const amb = scalec(H('amb'), .72 + day * .33), gnd = scalec(H('gnd'), .6 + day * .4);
     const sky = mixc(amb, skyTop, .25);
     const fogD = (.008 + (W.fog || 0) * .035 + (W.dust || 0) * .03 + (W.rain || 0) * .008) * [.7, .85, 1][R.Q.fog || 2] * (R.Q.drawDist === 0 ? 1.4 : 1);
     this.env = { sunDir: sd, sunCol, skyTop, skyHor, fogCol, sky, gnd, night, fog: [fogD, (World.water ? World.water.h : 0) + 1, .12, .93], dusk };
@@ -3549,7 +3550,7 @@ const Game = {
     if (!Settings.v.seenIntro || true) { await this.intro(); }
   },
   async startPlay(at) {
-    UI.hideAll(); this.setState('play'); $('hud').style.display = 'block'; this.fade(.8); this.ensureQuests();
+    UI.hideAll(); this.setState('play'); $('hud').style.display = 'block'; this.fade(.8); this.ensureQuests(); this.playAt = this.time;
     const R0 = REGIONS[this.S.region]; this.chapterCard('CHAPTER ' + R0.num, R0.chapter.toUpperCase(), R0.name.toUpperCase(), 4.2);
   },
   ensureQuests() { const S = this.S; for (const q of QUESTS) if (q.main && q.ch <= S.chapter && S.quests[q.id] === undefined) S.quests[q.id] = q.ch < S.chapter ? q.steps.length : 0; if (S.chapter >= 1 && S.quests.q2s === undefined) S.quests.q2s = 0; },
@@ -3558,7 +3559,7 @@ const Game = {
     const pos = data.pos; await this.loadRegion(data.region, pos ? [pos[0], pos[2], pos[3]] : null, { keepTod: true }); Player.hp = Math.max(30, data.hp || Player.maxHp()); this.startPlay();
   },
   async completeChapter() {
-    const S = this.S; if (this.state !== 'play') return; this.event('exit'); this.setState('cine'); await this.fadeOut(1);
+    const S = this.S; if (UI.closeRecord) UI.closeRecord(); $('confirm').style.display = 'none'; if (this.state !== 'play') return; this.event('exit'); this.setState('cine'); await this.fadeOut(1);
     if (S.region < S.chapter) { await this.travel(S.region + 1); return; }
     const R0 = REGIONS[S.region]; const rec = S.journal.filter(j => LOGS[j].ch === S.chapter).length, tot = Object.values(LOGS).filter(l => l.ch === S.chapter).length;
     $('cdbody').innerHTML = `<div class="small" style="letter-spacing:.3em;color:var(--amber)">CHAPTER ${R0.num}</div><h2 style="margin:6px 0 12px;letter-spacing:.1em">${R0.chapter}</h2>` + [['Records recovered', rec + ' / ' + tot], ['Places discovered', (S.disc[S.region] || []).length + ' / ' + R0.pois.length], ['Hidden frequencies', S.freqs.length + ' / 8'], ['Echoed silenced', S.kills], ['Salvage', S.salvage], ['Time on Vesper-9', UI.fmtTime(S.playTime)]].map(([a, b]) => `<div class="stat">${a}<b>${b}</b></div>`).join('');
@@ -3658,7 +3659,11 @@ const UI = {
   fmtTime(s) { s = Math.floor(s || 0); return `${Math.floor(s / 3600)}h ${String(Math.floor(s / 60) % 60).padStart(2, '0')}m`; },
   tip() { return ['The Echoed hunt by sound. Crouch, and they lose you.', 'Scan often — Vesper-9 hides more than it shows.', 'Every camera shows the same world. Try them all.', 'Hidden frequencies are scattered across all eight regions.', 'Some heights need tools you have not found yet. Come back.', 'Records you recover are kept in your journal, with evidence marked.', 'Your crew remember things they should not.'][Math.floor(Math.random() * 7)]; },
   confirm(text, yes) { $('confirmtxt').textContent = text; $('confirm').style.display = 'flex'; $('confirmyes').onclick = () => { $('confirm').style.display = 'none'; Audio2.sfx('ui_ok'); yes(); }; $('confirmno').onclick = () => { $('confirm').style.display = 'none'; Audio2.sfx('ui_back'); }; },
-  showRecord(L) { this.confirm('', () => { }); $('confirmtxt').innerHTML = `<div style="color:var(--amber);letter-spacing:.15em;margin-bottom:8px">${L.title.toUpperCase()}${L.evidence ? ' <span class="small" style="color:var(--cyan)">◈ EVIDENCE</span>' : ''}</div><div style="white-space:pre-wrap">${L.text}</div>`; $('confirmno').style.display = 'none'; $('confirmyes').textContent = 'Close'; const done = () => { $('confirmno').style.display = ''; $('confirmyes').textContent = 'Confirm'; }; const old = $('confirmyes').onclick; $('confirmyes').onclick = () => { $('confirm').style.display = 'none'; done(); }; },
+  showRecord(L) { const prev = Game.state === 'play' ? 'play' : null; if (prev) Game.setState('record');
+    $('confirmtxt').innerHTML = `<div style="color:var(--amber);letter-spacing:.15em;margin-bottom:8px">${L.title.toUpperCase()}${L.evidence ? ' <span class="small" style="color:var(--cyan)">◈ EVIDENCE</span>' : ''}</div><div style="white-space:pre-wrap">${L.text}</div>`;
+    $('confirm').style.display = 'flex'; $('confirmno').style.display = 'none'; $('confirmyes').textContent = 'Close'; $('confirmyes').focus();
+    this.closeRecord = () => { $('confirm').style.display = 'none'; $('confirmno').style.display = ''; $('confirmyes').textContent = 'Confirm'; this.closeRecord = null; if (prev && Game.state === 'record') Game.setState('play'); };
+    $('confirmyes').onclick = () => { Audio2.sfx('ui_back'); this.closeRecord && this.closeRecord(); }; },
   /* ---------------- title ---------------- */
   toTitle() {
     Game.S = null; Game.setState('title'); this.hideAll(); $('hud').style.display = 'none'; $('bossbar').style.display = 'none'; Boss.active = false; Companions.list = []; Enemies.clear(); Game.cinematic(false);
@@ -3909,7 +3914,8 @@ const Main = {
       if ((I.pressed.has('Escape') || I.pressed.has('Pad1') || I.pressed.has('Pad9')) && $('confirm').style.display !== 'flex' && !Input.rebinding) { if (UI.back && st !== 'title') { Audio2.sfx('ui_back'); UI.back(); } else if (st === 'title' && document.querySelector('#settings.on,#slots.on,#credits.on')) UI.back(); }
       if (st === 'pause' && (I.hit('inventory') || I.hit('map') || I.hit('journal')) && $('kit').classList.contains('on')) { const tab = I.hit('map') ? 'map' : I.hit('journal') ? 'journal' : 'inventory'; if (UI.kitTab === tab) UI.resume(); else UI.openKit(tab); }
       this.menuNav();
-    } else if (st === 'cine' && Game.inCine && Settings.v.seenIntro && (I.pressed.has('Escape') || I.pressed.has('Pad9'))) Game.skipFlag = true;
+    } else if (st === 'record') { if ((I.pressed.has('Escape') || I.tap('interact') || I.pressed.has('Enter') || I.pressed.has('Pad0') || I.pressed.has('Pad1')) && UI.closeRecord) UI.closeRecord(); }
+    else if (st === 'cine' && Game.inCine && Settings.v.seenIntro && (I.pressed.has('Escape') || I.pressed.has('Pad9'))) Game.skipFlag = true;
   },
   frame(now) {
     requestAnimationFrame(t => this.frame(t));
