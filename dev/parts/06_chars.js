@@ -42,7 +42,7 @@ const NPC_LOOKS = {
 };
 
 /* ---- animation: target pose from state, blended toward each frame ---- */
-function newPose() { return { hipY: 0, hipX: 0, pitch: 0, roll: 0, twist: 0, hy: 0, hp: 0, lsp: 0, lsr: .1, le: .1, rsp: 0, rsr: -.1, re: .1, lh: 0, lk: 0, rh: 0, rk: 0, la: 0, ra: 0, lhr: 0, rhr: 0, rollSpin: 0, crouch: 0, scale: 1 }; }
+function newPose() { return { hipY: 0, hipX: 0, pitch: 0, roll: 0, twist: 0, hy: 0, hp: 0, lsp: 0, lsr: .1, le: .1, rsp: 0, rsr: -.1, re: .1, lh: 0, lk: 0, rh: 0, rk: 0, la: 0, ra: 0, lhr: 0, rhr: 0, rollSpin: 0, crouch: 0, scale: 1, plant: 0, slopeY: 0 }; }
 const Anim = {
   target(ch, dt) {
     const T = newPose(), s = ch.anim, t = s.t;
@@ -56,11 +56,12 @@ const Anim = {
       T.lh = Math.sin(ph) * A; T.rh = -Math.sin(ph) * A;
       T.lk = Math.max(0, -Math.cos(ph)) * knee + .1; T.rk = Math.max(0, Math.cos(ph)) * knee + .1;
       T.la = -T.lh * .3; T.ra = -T.rh * .3;
-      T.lsp = -Math.sin(ph) * A * .8; T.rsp = Math.sin(ph) * A * .8; T.le = .3 + sp * .9; T.re = .3 + sp * .9;
-      T.hipY = -Math.abs(Math.cos(ph)) * (.03 + sp * .07) + .01; T.pitch = .05 + sp * .22 + (s.accel || 0) * .1; T.twist = Math.sin(ph) * .12 * sp; T.roll = (s.turn || 0) * .25 * sp;
+      // contralateral swing: the arm moves opposite to the same-side leg
+      T.lsp = Math.sin(ph) * A * .55; T.rsp = -Math.sin(ph) * A * .55; T.le = .35 + sp * .55; T.re = .35 + sp * .55;
+      T.pitch = .04 + sp * .12 + (s.accel || 0) * .05; T.twist = -Math.sin(ph) * .08 * sp; T.roll = (s.turn || 0) * .2 * sp;
     }
     if (ch.crouch) { T.crouch = 1; T.hipY -= .32; T.lh += -.9; T.rh += -.9; T.lk += 1.5; T.rk += 1.5; T.la += .6; T.ra += .6; T.pitch += .35; T.lsp -= .3; T.rsp -= .3; }
-    if (!ch.onGround && !ch.climbing) { const up = ch.vy > 0; T.lh = up ? -.9 : -.3; T.lk = up ? 1.3 : .4; T.rh = up ? .3 : .2; T.rk = up ? .4 : .7; T.lsp = -1.6 - (up ? .4 : 0); T.rsp = -1.6; T.lsr = .5; T.rsr = -.5; T.le = .5; T.re = .5; T.pitch = up ? -.1 : .15; }
+    if (!ch.onGround && !ch.climbing && (s.airT > .12 || ch.vy < -2 || ch.vy > 2)) { const up = ch.vy > 0; T.lh = up ? -.9 : -.3; T.lk = up ? 1.3 : .4; T.rh = up ? .3 : .2; T.rk = up ? .4 : .7; T.lsp = -1.6 - (up ? .4 : 0); T.rsp = -1.6; T.lsr = .5; T.rsr = -.5; T.le = .5; T.re = .5; T.pitch = up ? -.1 : .15; }
     if (s.land > 0) { const k = s.land / .25; T.hipY -= .22 * k; T.lk += 1 * k; T.rk += 1 * k; T.lh -= .5 * k; T.rh -= .5 * k; T.pitch += .3 * k; }
     if (ch.climbing) { const ph = s.phase; T.lsp = -2.6 + Math.sin(ph) * .4; T.rsp = -2.6 - Math.sin(ph) * .4; T.le = .6; T.re = .6; T.lh = -.6 + Math.sin(ph) * .5; T.rh = -.6 - Math.sin(ph) * .5; T.lk = 1.2; T.rk = 1.2; T.pitch = -.05; }
     if (s.mantle > 0) { const k = s.mantle; T.lsp = -2.4; T.rsp = -2.4; T.le = .3 + k; T.re = .3 + k; T.lh = -1.4 * k; T.lk = 1.8 * k; T.pitch = .5 * k; }
@@ -78,10 +79,11 @@ const Anim = {
     if (s.victory > 0) { T.rsp = -2.9; T.re = .1; T.lsp = -.4; T.hp = -.2; }
     if (s.sit > 0) { T.hipY = -.5; T.lh = -1.5; T.rh = -1.5; T.lk = 1.5; T.rk = 1.5; T.pitch = .1; T.lsp = -.6; T.rsp = -.6; T.le = 1; T.re = 1; T.hp = .2; }
     if (s.kneel > 0) { T.hipY = -.45; T.lh = -1.4; T.lk = 1.6; T.rh = .1; T.rk = 2.2; T.ra = -.6; T.rsp = -1.1; T.re = .8; T.pitch = .4; T.hp = .5; }
+    T.plant = ch.onGround && !ch.climbing && !s.dead && !(s.roll > 0) && !(s.mantle > 0) && !(s.sit > 0) && !(s.kneel > 0) && !(!ch.onGround) ? 1 : 0;
     return T;
   },
   update(ch, dt) {
-    const s = ch.anim; s.t += dt;
+    const s = ch.anim; s.t += dt; s.airT = ch.onGround || ch.climbing ? 0 : (s.airT || 0) + dt;
     // gait phase advances with distance travelled → feet don't slide
     const stride = ch.crouch ? .55 : lerp(.75, 1.25, sat(ch.speed / 6.5));
     const prev = s.phase; if (ch.speed > .25 && ch.onGround) s.phase += ch.speed * dt / stride * Math.PI; else if (ch.climbing) s.phase += ch.climbSpeed * dt * 4;
@@ -95,7 +97,7 @@ const Anim = {
       const c = Math.cos(ch.yaw), sn = Math.sin(ch.yaw), w = .12;
       const gl = World.ground(ch.x - c * w, ch.z + sn * w, ch.y + .4).h, gr = World.ground(ch.x + c * w, ch.z - sn * w, ch.y + .4).h;
       const dl = clamp(gl - ch.y, -.35, .35), dr = clamp(gr - ch.y, -.35, .35);
-      P.hipY += Math.min(dl, dr, 0) * .9; P.lk += Math.max(0, dl - Math.min(dl, dr)) * 2.2; P.rk += Math.max(0, dr - Math.min(dl, dr)) * 2.2; P.lh -= Math.max(0, dl - Math.min(dl, dr)) * 1.1; P.rh -= Math.max(0, dr - Math.min(dl, dr)) * 1.1;
+      P.slopeY = Math.min(dl, dr, 0) * .9; P.lk += Math.max(0, dl - Math.min(dl, dr)) * 2.2; P.rk += Math.max(0, dr - Math.min(dl, dr)) * 2.2; P.lh -= Math.max(0, dl - Math.min(dl, dr)) * 1.1; P.rh -= Math.max(0, dr - Math.min(dl, dr)) * 1.1;
     }
   },
 };
@@ -111,7 +113,10 @@ function drawHumanoid(ch, opts = {}) {
   const fl = ch.flash > 0 ? .9 : 0; const em = (c) => fl; const tint = c => ch.flash > 0 ? mixc(c, [1, 1, 1], .7) : c;
   const sc = P.scale || 1;
   const root = A34.trs(mp(), ch.x, ch.y, ch.z, ch.yaw, 0, 0, sc, sc, sc);
-  const hipH = .93 + P.hipY;
+  // foot planting: put the lowest foot sole exactly on the ground (legs: thigh .42, shank .42, hip offset .05, foot sole .07)
+  const ext = (h, k) => .05 + .42 * Math.cos(h) + .42 * Math.cos(k - h) + .07;
+  const Emax = Math.max(ext(P.lh, P.lk), ext(P.rh, P.rk));
+  const hipH = lerp(.93 + P.hipY, Emax + (P.slopeY || 0), P.plant);
   let pelvis = joint(root, P.hipX, hipH, 0, P.twist * .3, 0, P.roll * .5);
   if (P.rollSpin) pelvis = joint(pelvis, 0, -.1, 0, 0, P.rollSpin, 0);
   const jc = tint(C.jacket), tc = tint(C.trousers), ac = tint(C.accent), bc = tint(C.boots), sk = tint(C.skin), gc = L.gloves ? tint(C.gloves) : sk;
