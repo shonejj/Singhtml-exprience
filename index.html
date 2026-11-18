@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Last Frequency">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="THE LAST FREQUENCY — an atmospheric 2.5D/3D pixel-art science-fiction adventure on the silent planet Vesper-9.">
 <title>The Last Frequency</title>
 <style>
@@ -24,6 +31,7 @@ html,body{margin:0;height:100%;background:var(--ink);color:var(--text);font-fami
 .screen{position:absolute;inset:0;display:none;pointer-events:auto;align-items:center;justify-content:center;
   padding:calc(12px + var(--sat)) calc(12px + var(--sar)) calc(12px + var(--sab)) calc(12px + var(--sal))}
 .screen.on{display:flex;animation:fadein .35s ease}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .reduced .screen.on{animation:none}
 .panel{background:var(--panel);border:1px solid var(--line);box-shadow:0 0 0 1px #000,0 18px 60px rgba(0,0,0,.6);position:relative;
@@ -140,6 +148,9 @@ input[type=checkbox]{accent-color:var(--amber);width:18px;height:18px}
 #puzc{width:100%;max-width:700px;aspect-ratio:7/4;image-rendering:pixelated;background:#050a0e;border:1px solid #1f3a44;touch-action:none;display:block;margin:0 auto}
 #puz .ctr{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:10px}
 #puz .ctr .row{border:0;min-width:240px}
+#puz .ctr .dial{gap:6px}#puz .ctr .dial input{width:150px;touch-action:pan-x}#puz button.st{width:44px;height:44px;padding:0;font-size:16px;touch-action:manipulation;flex:none}
+@media (max-height:560px){#puz .panel{width:min(940px,100%)!important;max-height:100%}#puz .pb{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:10px;align-items:center;padding:8px}#puz #puzc{max-height:calc(100vh - 120px);width:100%}#puz .ctr{flex-direction:column;flex-wrap:nowrap;margin:0;gap:4px}#puz .ctr .row{min-width:0}#puz .ctr .dial input{width:100%;flex:1;min-width:60px}#puz #puzhint{grid-column:1/3;margin-top:0;font-size:11px}#puz .ph{padding:6px 10px}#puz .pf{padding:6px 10px}}
+#puz,#puz *{touch-action:manipulation}#puz input[type=range]{touch-action:pan-x}
 /* touch */
 #touch{display:none}
 #touch.on{display:block}
@@ -227,6 +238,7 @@ body.touchui #weap{bottom:auto;top:calc(56px + var(--sat))}body.touchui #weap .b
 <div class="screen" id="credits" style="background:rgba(0,0,0,.92)"><div class="panel" style="width:min(640px,100%);height:min(700px,100%)"><div class="ph"><span>Credits</span><span class="sp"></span><button data-back>Back</button></div><div class="pb roll" id="creditroll"></div></div></div>
 <div class="confirm" id="confirm"><div class="panel" style="width:min(460px,92vw)"><div class="pb" id="confirmtxt" style="line-height:1.5"></div><div class="pf"><button id="confirmno">Cancel</button><button class="prim" id="confirmyes">Confirm</button></div></div></div>
 <div id="fade" class="on"></div>
+<div id="tapstart" style="position:absolute;inset:0;z-index:60;display:none;background:radial-gradient(ellipse at 50% 60%,#2a1830,#07080c 70%);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;pointer-events:auto"><div style="font-size:clamp(22px,6vw,44px);letter-spacing:.3em;color:#f1e6cf">THE LAST FREQUENCY</div><div id="tapgo" style="margin-top:26px;font-size:18px;letter-spacing:.3em;color:var(--amber);animation:blink 1.4s infinite">TAP TO START</div><div class="small" style="margin-top:18px;max-width:420px">Plays best in landscape, fullscreen. The game will request fullscreen and lock to landscape when you tap.</div><button id="tapinstall" style="margin-top:16px;display:none">Install as app</button></div>
 <div id="rot">Rotate your device to landscape for the best experience.<br><br><button onclick="this.parentNode.style.display='none';window.__rotDismissed=1">Continue anyway</button></div>
 <div id="err"></div>
 <div id="perf"></div>
@@ -434,7 +446,7 @@ const Input = {
     });
     document.addEventListener('gesturestart', e => e.preventDefault());
     addEventListener('touchstart', () => { this.device = 'touch'; }, { passive: true, capture: true });
-    addEventListener('touchmove', e => { if (window.Game && Game.state === 'play') e.preventDefault(); }, { passive: false });
+    addEventListener('touchmove', e => { if (window.Game && Game.state === 'play' && !e.target.closest('#puz,#kit,#settings,.screen')) e.preventDefault(); }, { passive: false });
   },
   // gamepad (standard mapping)
   pollPad() {
@@ -1532,7 +1544,7 @@ const NPC_LOOKS = {
 };
 
 /* ---- animation: target pose from state, blended toward each frame ---- */
-function newPose() { return { hipY: 0, hipX: 0, pitch: 0, roll: 0, twist: 0, hy: 0, hp: 0, lsp: 0, lsr: .1, le: .1, rsp: 0, rsr: -.1, re: .1, lh: 0, lk: 0, rh: 0, rk: 0, la: 0, ra: 0, lhr: 0, rhr: 0, rollSpin: 0, crouch: 0, scale: 1 }; }
+function newPose() { return { hipY: 0, hipX: 0, pitch: 0, roll: 0, twist: 0, hy: 0, hp: 0, lsp: 0, lsr: .1, le: .1, rsp: 0, rsr: -.1, re: .1, lh: 0, lk: 0, rh: 0, rk: 0, la: 0, ra: 0, lhr: 0, rhr: 0, rollSpin: 0, crouch: 0, scale: 1, plant: 0, slopeY: 0 }; }
 const Anim = {
   target(ch, dt) {
     const T = newPose(), s = ch.anim, t = s.t;
@@ -1546,11 +1558,12 @@ const Anim = {
       T.lh = Math.sin(ph) * A; T.rh = -Math.sin(ph) * A;
       T.lk = Math.max(0, -Math.cos(ph)) * knee + .1; T.rk = Math.max(0, Math.cos(ph)) * knee + .1;
       T.la = -T.lh * .3; T.ra = -T.rh * .3;
-      T.lsp = -Math.sin(ph) * A * .8; T.rsp = Math.sin(ph) * A * .8; T.le = .3 + sp * .9; T.re = .3 + sp * .9;
-      T.hipY = -Math.abs(Math.cos(ph)) * (.03 + sp * .07) + .01; T.pitch = .05 + sp * .22 + (s.accel || 0) * .1; T.twist = Math.sin(ph) * .12 * sp; T.roll = (s.turn || 0) * .25 * sp;
+      // contralateral swing: the arm moves opposite to the same-side leg
+      T.lsp = Math.sin(ph) * A * .55; T.rsp = -Math.sin(ph) * A * .55; T.le = .35 + sp * .55; T.re = .35 + sp * .55;
+      T.pitch = .04 + sp * .12 + (s.accel || 0) * .05; T.twist = -Math.sin(ph) * .08 * sp; T.roll = (s.turn || 0) * .2 * sp;
     }
     if (ch.crouch) { T.crouch = 1; T.hipY -= .32; T.lh += -.9; T.rh += -.9; T.lk += 1.5; T.rk += 1.5; T.la += .6; T.ra += .6; T.pitch += .35; T.lsp -= .3; T.rsp -= .3; }
-    if (!ch.onGround && !ch.climbing) { const up = ch.vy > 0; T.lh = up ? -.9 : -.3; T.lk = up ? 1.3 : .4; T.rh = up ? .3 : .2; T.rk = up ? .4 : .7; T.lsp = -1.6 - (up ? .4 : 0); T.rsp = -1.6; T.lsr = .5; T.rsr = -.5; T.le = .5; T.re = .5; T.pitch = up ? -.1 : .15; }
+    if (!ch.onGround && !ch.climbing && (s.airT > .12 || ch.vy < -2 || ch.vy > 2)) { const up = ch.vy > 0; T.lh = up ? -.9 : -.3; T.lk = up ? 1.3 : .4; T.rh = up ? .3 : .2; T.rk = up ? .4 : .7; T.lsp = -1.6 - (up ? .4 : 0); T.rsp = -1.6; T.lsr = .5; T.rsr = -.5; T.le = .5; T.re = .5; T.pitch = up ? -.1 : .15; }
     if (s.land > 0) { const k = s.land / .25; T.hipY -= .22 * k; T.lk += 1 * k; T.rk += 1 * k; T.lh -= .5 * k; T.rh -= .5 * k; T.pitch += .3 * k; }
     if (ch.climbing) { const ph = s.phase; T.lsp = -2.6 + Math.sin(ph) * .4; T.rsp = -2.6 - Math.sin(ph) * .4; T.le = .6; T.re = .6; T.lh = -.6 + Math.sin(ph) * .5; T.rh = -.6 - Math.sin(ph) * .5; T.lk = 1.2; T.rk = 1.2; T.pitch = -.05; }
     if (s.mantle > 0) { const k = s.mantle; T.lsp = -2.4; T.rsp = -2.4; T.le = .3 + k; T.re = .3 + k; T.lh = -1.4 * k; T.lk = 1.8 * k; T.pitch = .5 * k; }
@@ -1568,10 +1581,11 @@ const Anim = {
     if (s.victory > 0) { T.rsp = -2.9; T.re = .1; T.lsp = -.4; T.hp = -.2; }
     if (s.sit > 0) { T.hipY = -.5; T.lh = -1.5; T.rh = -1.5; T.lk = 1.5; T.rk = 1.5; T.pitch = .1; T.lsp = -.6; T.rsp = -.6; T.le = 1; T.re = 1; T.hp = .2; }
     if (s.kneel > 0) { T.hipY = -.45; T.lh = -1.4; T.lk = 1.6; T.rh = .1; T.rk = 2.2; T.ra = -.6; T.rsp = -1.1; T.re = .8; T.pitch = .4; T.hp = .5; }
+    T.plant = ch.onGround && !ch.climbing && !s.dead && !(s.roll > 0) && !(s.mantle > 0) && !(s.sit > 0) && !(s.kneel > 0) && !(!ch.onGround) ? 1 : 0;
     return T;
   },
   update(ch, dt) {
-    const s = ch.anim; s.t += dt;
+    const s = ch.anim; s.t += dt; s.airT = ch.onGround || ch.climbing ? 0 : (s.airT || 0) + dt;
     // gait phase advances with distance travelled → feet don't slide
     const stride = ch.crouch ? .55 : lerp(.75, 1.25, sat(ch.speed / 6.5));
     const prev = s.phase; if (ch.speed > .25 && ch.onGround) s.phase += ch.speed * dt / stride * Math.PI; else if (ch.climbing) s.phase += ch.climbSpeed * dt * 4;
@@ -1585,7 +1599,7 @@ const Anim = {
       const c = Math.cos(ch.yaw), sn = Math.sin(ch.yaw), w = .12;
       const gl = World.ground(ch.x - c * w, ch.z + sn * w, ch.y + .4).h, gr = World.ground(ch.x + c * w, ch.z - sn * w, ch.y + .4).h;
       const dl = clamp(gl - ch.y, -.35, .35), dr = clamp(gr - ch.y, -.35, .35);
-      P.hipY += Math.min(dl, dr, 0) * .9; P.lk += Math.max(0, dl - Math.min(dl, dr)) * 2.2; P.rk += Math.max(0, dr - Math.min(dl, dr)) * 2.2; P.lh -= Math.max(0, dl - Math.min(dl, dr)) * 1.1; P.rh -= Math.max(0, dr - Math.min(dl, dr)) * 1.1;
+      P.slopeY = Math.min(dl, dr, 0) * .9; P.lk += Math.max(0, dl - Math.min(dl, dr)) * 2.2; P.rk += Math.max(0, dr - Math.min(dl, dr)) * 2.2; P.lh -= Math.max(0, dl - Math.min(dl, dr)) * 1.1; P.rh -= Math.max(0, dr - Math.min(dl, dr)) * 1.1;
     }
   },
 };
@@ -1601,7 +1615,10 @@ function drawHumanoid(ch, opts = {}) {
   const fl = ch.flash > 0 ? .9 : 0; const em = (c) => fl; const tint = c => ch.flash > 0 ? mixc(c, [1, 1, 1], .7) : c;
   const sc = P.scale || 1;
   const root = A34.trs(mp(), ch.x, ch.y, ch.z, ch.yaw, 0, 0, sc, sc, sc);
-  const hipH = .93 + P.hipY;
+  // foot planting: put the lowest foot sole exactly on the ground (legs: thigh .42, shank .42, hip offset .05, foot sole .07)
+  const ext = (h, k) => .05 + .42 * Math.cos(h) + .42 * Math.cos(k - h) + .07;
+  const Emax = Math.max(ext(P.lh, P.lk), ext(P.rh, P.rk));
+  const hipH = lerp(.93 + P.hipY, Emax + (P.slopeY || 0), P.plant);
   let pelvis = joint(root, P.hipX, hipH, 0, P.twist * .3, 0, P.roll * .5);
   if (P.rollSpin) pelvis = joint(pelvis, 0, -.1, 0, 0, P.rollSpin, 0);
   const jc = tint(C.jacket), tc = tint(C.trousers), ac = tint(C.accent), bc = tint(C.boots), sk = tint(C.skin), gc = L.gloves ? tint(C.gloves) : sk;
@@ -2319,7 +2336,7 @@ const Boss = {
     if (D.weak === 'scan' && b.revealed <= 0) k = .25; if (D.weak === 'burst' && b.shield > 0) { k = .15; if (src.burst) { b.shield = 0; b.shieldT = 6; Audio2.sfx('break', [b.x, b.y + 2, b.z]); FX.burst(b.x, b.y + 2, b.z, 40, [.8, 1, 1], 5, 1, .8, true); Game.cue('Shield shattered!'); } }
     if (D.weak === 'cold' && b.cold <= 0) k = .2; if (D.weak === 'pylons' && b.vuln <= 0) k = .2; if (D.weak === 'nodes' && b.vuln <= 0) k = .15;
     if (b.vuln > 0) k *= 2.2; b.hp -= dmg * k; b.flash = .1; Game.dmgNumber(b.x, b.y + b.aimH + 1, Math.round(dmg * k), k > 1);
-    if (k < .3 && Math.random() < .1) Game.cue(D.weak === 'scan' ? 'It shifts out of phase — scan it!' : D.weak === 'cold' ? 'Armored. Its vents are white-hot...' : D.weak === 'pylons' ? 'Roots absorb the energy. The arc pylons?' : D.weak === 'nodes' ? 'The crystal nodes sing in sequence...' : 'Shielded — a resonance burst might break it.');
+    if (k < .3 && (!b.hinted || (!b.hinted2 && Game.time - b.hinted > 12))) { if (b.hinted) b.hinted2 = 1; b.hinted = b.hinted || Game.time; Game.say('sys', D.weak === 'scan' ? `It is out of phase — hold [${Input.glyph('scan')}] to scan it, then strike while it glows.` : D.weak === 'cold' ? 'Its armor holds. Lure it beside the coolant tanks and shoot one.' : D.weak === 'pylons' ? 'The roots absorb damage. Use a burst near a glowing pylon.' : D.weak === 'nodes' ? 'Shoot the crystals in the order they pulse.' : 'Its shield blocks you. Break it with a resonance burst.', { short: false }); } else if (k < .3 && Math.random() < .1) Game.cue(D.weak === 'scan' ? 'It shifts out of phase — scan it!' : D.weak === 'cold' ? 'Armored. Its vents are white-hot...' : D.weak === 'pylons' ? 'Roots absorb the energy. The arc pylons?' : D.weak === 'nodes' ? 'The crystal nodes sing in sequence...' : 'Shielded — a resonance burst might break it.');
     const r = b.hp / b.maxHp; const ph = D.phases.length - 1 - [...D.phases].reverse().findIndex(p => r <= p.at);
     if (ph > b.phase && ph < D.phases.length) { b.phase = ph; b.q = []; Audio2.sfx('boss_roar', [b.x, b.y + 2, b.z]); Cam.shake(.6); FX.burst(b.x, b.y + 2, b.z, 60, D.glow, 6, 1.4, .8, true); Game.onBossPhase(b.id, ph); }
     if (D.talk && r < D.talk && !b.talkDone) { b.talkDone = true; b.state = 'talk'; Game.onBossTalk(b.id); return; }
@@ -2506,11 +2523,15 @@ const Puzzle = {
     $('puztitle').textContent = def.title || 'Signal'; $('puzsub').textContent = def.sub || ''; $('puzhint').textContent = def.help || '';
     const ctr = $('puzctr'); ctr.innerHTML = '';
     if (def.type === 'tune') { const n = def.dials || 1; P.vals = []; P.target = def.target || Array.from({ length: n }, () => .15 + Math.random() * .7); const names = ['Frequency', 'Phase', 'Amplitude'];
-      for (let i = 0; i < n; i++) { P.vals[i] = (P.target[i] + .35 + Math.random() * .3) % 1; const row = document.createElement('div'); row.className = 'row'; row.innerHTML = `<label>${names[i]}</label><input type="range" min="0" max="1000" value="${P.vals[i] * 1000}" data-i="${i}">`; ctr.appendChild(row); row.querySelector('input').oninput = e => { P.vals[i] = e.target.value / 1000; P.sel = i; }; }
+      for (let i = 0; i < n; i++) { P.vals[i] = (P.target[i] + .35 + Math.random() * .3) % 1; const row = document.createElement('div'); row.className = 'row dial'; row.innerHTML = `<label>${names[i]}</label><button class="st" data-d="-1" aria-label="decrease">◀</button><input type="range" min="0" max="1000" value="${P.vals[i] * 1000}" data-i="${i}"><button class="st" data-d="1" aria-label="increase">▶</button>`; ctr.appendChild(row);
+        const inp = row.querySelector('input'); inp.oninput = e => { P.vals[i] = e.target.value / 1000; P.sel = i; };
+        row.onpointerdown = () => { P.sel = i; };
+        row.querySelectorAll('.st').forEach(b => { let h = null, t0 = 0; const stepOnce = () => { P.sel = i; P.vals[i] = clamp(P.vals[i] + (+b.dataset.d) * .012, 0, 1); inp.value = P.vals[i] * 1000; Audio2.sfx('ui'); };
+          const stop = () => { clearInterval(h); h = null; }; b.onpointerdown = e => { e.preventDefault(); stepOnce(); stop(); t0 = setTimeout(() => { h = setInterval(stepOnce, 70); }, 350); b._t = t0; }; ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { clearTimeout(b._t); stop(); })); }); }
       P.sel = 0; this.osc(true); }
     if (def.type === 'route') this.genRoute(P);
     Game.setState('puzzle'); UI.show('puz'); const c = $('puzc');
-    c.onpointerdown = e => this.click(e);
+    c.onpointerdown = e => { this.click(e); const P = this.cur; if (P && P.type === 'tune') { P.drag = e.clientX; try { c.setPointerCapture(e.pointerId); } catch (er) { } } }; c.onpointermove = e => { const P = this.cur; if (P && P.type === 'tune' && P.drag != null) { const d = (e.clientX - P.drag) / c.getBoundingClientRect().width; P.drag = e.clientX; P.vals[P.sel] = clamp(P.vals[P.sel] + d * .8, 0, 1); const el = $('puzctr').querySelectorAll('input')[P.sel]; if (el) el.value = P.vals[P.sel] * 1000; } }; c.onpointerup = c.onpointercancel = () => { if (this.cur) this.cur.drag = null; };
   },
   osc(on) { if (!Audio2.ok) return; if (on) { const c = Audio2.ctx; this.o1 = c.createOscillator(); this.o2 = c.createOscillator(); this.og = c.createGain(); this.og.gain.value = .04; this.o1.type = 'triangle'; this.o2.type = 'triangle'; this.o1.connect(this.og); this.o2.connect(this.og); this.og.connect(Audio2.bus.sfx); this.o1.start(); this.o2.start(); }
     else if (this.o1) { try { this.o1.stop(); this.o2.stop(); } catch (e) { } this.o1 = null; } },
@@ -2518,7 +2539,7 @@ const Puzzle = {
   hint() { const P = this.cur; if (!P) return; P.hints++; Audio2.sfx('ui');
     if (P.type === 'tune') { let worst = 0, wi = 0; P.vals.forEach((v, i) => { const d = Math.abs(v - P.target[i]); if (d > worst) { worst = d; wi = i; } }); $('puzhint').textContent = `Hint: ${['Frequency', 'Phase', 'Amplitude'][wi]} is ${P.vals[wi] < P.target[wi] ? 'too low' : 'too high'}. Listen for the beating to slow.`; P.showT = 2; }
     if (P.type === 'route') { const wrong = P.cells.filter(c => c.sol !== undefined && c.rot % (c.sym || 4) !== c.sol % (c.sym || 4)); if (wrong.length) { const c = wrong[0]; c.rot = c.sol; c.locked = true; $('puzhint').textContent = 'Hint: one conduit locked into place.'; } } },
-  tol() { return Settings.v.puzzleHints ? .06 : .035; },
+  tol() { return Settings.v.puzzleHints ? .09 : .06; },
   update(dt) {
     const P = this.cur; if (!P) return; P.t += dt; const c = $('puzc'), g = c.getContext('2d'); const W = c.width, H = c.height; g.fillStyle = '#050a0e'; g.fillRect(0, 0, W, H);
     const I = Input;
@@ -2534,7 +2555,7 @@ const Puzzle = {
       const noise = Math.min(1, err * 3); g.strokeStyle = ok ? '#8dff9a' : '#6ff3ff'; g.lineWidth = 1.5; g.beginPath(); for (let x = 0; x < W; x += 2) { const y = H / 2 - wave(P.vals, x) * H * .36 + (Math.random() - .5) * noise * 18; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
       g.fillStyle = '#6ff3ff'; g.font = '10px monospace'; g.fillText('SIGNAL COHERENCE ' + Math.round((1 - Math.min(1, err * 3)) * 100) + '%', 8, 14); if (P.showT > 0) { P.showT -= dt; g.fillStyle = '#ffb547'; g.fillText('TARGET ' + P.target.map(v => (v * 100).toFixed(0)).join(' · '), 8, H - 8); }
       if (this.o1) { const f1 = 220 + P.target[0] * 440, f2 = 220 + P.vals[0] * 440 + (n > 1 ? (P.vals[1] - P.target[1]) * 60 : 0); this.o1.frequency.value = f1; this.o2.frequency.value = f2; }
-      if (ok) { P.hold += dt; g.fillStyle = '#8dff9a'; g.fillRect(0, H - 4, W * Math.min(1, P.hold / 1.2), 4); if (P.hold > 1.2) return this.close(true); } else P.hold = 0;
+      if (ok) { P.hold += dt; g.fillStyle = '#8dff9a'; g.fillRect(0, H - 4, W * Math.min(1, P.hold / .8), 4); g.fillText('LOCKING…', W - 70, 14); if (P.hold > .8) return this.close(true); } else { P.hold = 0; if (err < this.tol() * 2.2) { g.fillStyle = '#ffb547'; g.fillText('CLOSE — fine-tune', W - 110, 14); } }
     }
     if (P.type === 'route') this.drawRoute(P, g, W, H, dt);
     if ((I.pressed.has('Escape') || I.pressed.has('Pad1')) && P.t > .2) return this.close(false);
@@ -3872,7 +3893,7 @@ const UI = {
     // world-space markers + damage numbers
     const M = $('markers'); let mh2 = '';
     for (const e of Enemies.list) { if (e.dead || !(e.marked > 0) || e.isBoss) continue; const s = R.toScreen(e.x, e.y + e.aimH + (e.heavy ? 2 : 1.2), e.z); if (s && s[3]) mh2 += `<div class="e" style="left:${s[0]}px;top:${s[1]}px">◆ ${e.T.name.replace('Echoed ', '')}${e.state === 'chase' ? ' !' : ''}</div>`; }
-    if (best && best.kind === 'npc' && Game.state === 'play') { }
+    if (o && o.step && o.step.at && Game.state === 'play') { const ty = World.hf.at(o.step.at[0], o.step.at[1]); const d = Math.hypot(o.step.at[0] - p.x, o.step.at[1] - p.z); if (d > 4) { const s = R.toScreen(o.step.at[0], ty + 3.2 + Math.sin(Game.time * 3) * .2, o.step.at[1]); if (s && s[3]) mh2 += `<div class="q" style="left:${s[0]}px;top:${s[1]}px">▼ ${Math.round(d)}m</div>`; } }
     for (let i = this.dmgNums.length - 1; i >= 0; i--) { const d = this.dmgNums[i]; d.t += Game.dt; if (d.t > .9) { this.dmgNums.splice(i, 1); continue; } const s = R.toScreen(d.x, d.y + d.t * .8, d.z); if (s && s[3]) mh2 += `<div class="${d.crit ? 'q' : ''}" style="left:${s[0]}px;top:${s[1]}px;color:${d.crit ? 'var(--amber)' : '#fff'};opacity:${1 - d.t}">${d.n}</div>`; }
     if (this.dmgNums.length > 20) this.dmgNums.splice(0, this.dmgNums.length - 20);
     M.innerHTML = mh2;
@@ -3938,6 +3959,20 @@ const Main = {
     Input.endFrame();
   },
 };
+/* ---------- PWA: install + fullscreen/landscape ---------- */
+const Install = {
+  deferred: null, standalone: matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true,
+  ios: /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+  can() { return !this.standalone && (!!this.deferred || this.ios); },
+  async prompt() { if (this.deferred) { const d = this.deferred; this.deferred = null; d.prompt(); try { const r = await d.userChoice; if (r.outcome === 'accepted') UI.toast('Installing…'); } catch (e) { } UI.refreshInstall && UI.refreshInstall(); }
+    else if (this.ios) UI.confirm('To install on iPhone/iPad: tap the Share button in Safari, then "Add to Home Screen". The game then opens fullscreen.', () => { }); },
+  async goFullscreen() { const el = document.documentElement; try { if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' }); else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); } catch (e) { }
+    try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) { /* unsupported (iOS) or denied: rotate prompt remains the fallback */ } },
+};
+UI.refreshInstall = () => { const b = $('tapinstall'); if (b) { b.style.display = Install.can() ? 'inline-block' : 'none'; b.onclick = e => { e.stopPropagation(); Install.prompt(); }; } if (Game.state === 'title') UI.titleMenu(); };
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); Install.deferred = e; UI.refreshInstall && UI.refreshInstall(); });
+addEventListener('appinstalled', () => { Install.standalone = true; Install.deferred = null; UI.toast('Installed — launch it from your home screen'); UI.refreshInstall && UI.refreshInstall(); });
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
 function GS() { return Game.S || Main.titleState || (Main.titleState = Game.newState(DEFAULT_LOOK)); }
 function boot() {
   Settings.load(); Save.test(); Input.init(); FX.init();
@@ -3949,6 +3984,9 @@ function boot() {
   $('retry').onclick = () => { Audio2.sfx('ui_ok'); Game.retry(); }; $('deathmenu').onclick = () => UI.toTitle();
   document.addEventListener('visibilitychange', () => { if (document.hidden) { if (Game.state === 'play') UI.openKit('inventory'); if (Audio2.ctx) Audio2.ctx.suspend(); } else if (Audio2.ctx) Audio2.ctx.resume(); });
   addEventListener('pointerdown', () => Audio2.init(), { once: true }); addEventListener('keydown', () => Audio2.init(), { once: true });
+  const ts = $('tapstart');
+  if (Input.isTouch && matchMedia('(pointer: coarse)').matches) { ts.style.display = 'flex'; if (Install.can()) { $('tapinstall').style.display = 'inline-block'; $('tapinstall').onclick = e => { e.stopPropagation(); Install.prompt(); }; }
+    ts.onclick = () => { ts.style.display = 'none'; Audio2.init(); Install.goFullscreen(); Input.device = 'touch'; }; }
   Game.setState('title'); UI.toTitle();
   Main.last = performance.now(); requestAnimationFrame(t => Main.frame(t));
   window.__game = { Game, R, World, Player, Cam, UI, Enemies, Boss, Settings, Save, REGIONS, Scanner, Puzzle, Input, Audio2, FX, Companions };

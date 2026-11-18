@@ -52,6 +52,20 @@ const Main = {
     Input.endFrame();
   },
 };
+/* ---------- PWA: install + fullscreen/landscape ---------- */
+const Install = {
+  deferred: null, standalone: matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true,
+  ios: /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+  can() { return !this.standalone && (!!this.deferred || this.ios); },
+  async prompt() { if (this.deferred) { const d = this.deferred; this.deferred = null; d.prompt(); try { const r = await d.userChoice; if (r.outcome === 'accepted') UI.toast('Installing…'); } catch (e) { } UI.refreshInstall && UI.refreshInstall(); }
+    else if (this.ios) UI.confirm('To install on iPhone/iPad: tap the Share button in Safari, then "Add to Home Screen". The game then opens fullscreen.', () => { }); },
+  async goFullscreen() { const el = document.documentElement; try { if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' }); else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); } catch (e) { }
+    try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) { /* unsupported (iOS) or denied: rotate prompt remains the fallback */ } },
+};
+UI.refreshInstall = () => { const b = $('tapinstall'); if (b) { b.style.display = Install.can() ? 'inline-block' : 'none'; b.onclick = e => { e.stopPropagation(); Install.prompt(); }; } if (Game.state === 'title') UI.titleMenu(); };
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); Install.deferred = e; UI.refreshInstall && UI.refreshInstall(); });
+addEventListener('appinstalled', () => { Install.standalone = true; Install.deferred = null; UI.toast('Installed — launch it from your home screen'); UI.refreshInstall && UI.refreshInstall(); });
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
 function GS() { return Game.S || Main.titleState || (Main.titleState = Game.newState(DEFAULT_LOOK)); }
 function boot() {
   Settings.load(); Save.test(); Input.init(); FX.init();
@@ -63,6 +77,9 @@ function boot() {
   $('retry').onclick = () => { Audio2.sfx('ui_ok'); Game.retry(); }; $('deathmenu').onclick = () => UI.toTitle();
   document.addEventListener('visibilitychange', () => { if (document.hidden) { if (Game.state === 'play') UI.openKit('inventory'); if (Audio2.ctx) Audio2.ctx.suspend(); } else if (Audio2.ctx) Audio2.ctx.resume(); });
   addEventListener('pointerdown', () => Audio2.init(), { once: true }); addEventListener('keydown', () => Audio2.init(), { once: true });
+  const ts = $('tapstart');
+  if (Input.isTouch && matchMedia('(pointer: coarse)').matches) { ts.style.display = 'flex'; if (Install.can()) { $('tapinstall').style.display = 'inline-block'; $('tapinstall').onclick = e => { e.stopPropagation(); Install.prompt(); }; }
+    ts.onclick = () => { ts.style.display = 'none'; Audio2.init(); Install.goFullscreen(); Input.device = 'touch'; }; }
   Game.setState('title'); UI.toTitle();
   Main.last = performance.now(); requestAnimationFrame(t => Main.frame(t));
   window.__game = { Game, R, World, Player, Cam, UI, Enemies, Boss, Settings, Save, REGIONS, Scanner, Puzzle, Input, Audio2, FX, Companions };
