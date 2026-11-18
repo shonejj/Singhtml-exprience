@@ -96,7 +96,7 @@ input[type=checkbox]{accent-color:var(--amber);width:18px;height:18px}
 #toast div{background:rgba(0,0,0,.72);border:1px solid var(--line2);padding:7px 14px;margin:4px;animation:toast 3.4s forwards;letter-spacing:.1em}
 #toast div.cp{border-color:var(--amber);color:var(--amber)}
 @keyframes toast{0%{opacity:0;transform:translateY(-6px)}8%,80%{opacity:1;transform:none}100%{opacity:0}}
-#subs{position:absolute;left:50%;bottom:calc(12% + var(--sab));transform:translateX(-50%);width:min(860px,90vw);text-align:center;font-size:var(--subsize);line-height:1.35}
+#subs{position:absolute;top:auto;height:auto;inset:auto auto calc(12% + var(--sab)) 50%;transform:translateX(-50%);width:min(860px,90vw);text-align:center;font-size:var(--subsize);line-height:1.35}
 #subs div{display:inline-block;padding:4px 10px;margin:2px}
 #subs.bg div{background:rgba(0,0,0,.72)}
 #subs b{color:var(--amber);font-weight:normal}
@@ -1617,13 +1617,6 @@ const Anim = {
     if (s.idleT === undefined) s.idleT = 0; s.idleT += dt; if (s.idleT > 6) { s.idleT = 0; s.idleVar = (Math.random() * 3) | 0; }
     const T = this.target(ch, dt); const P = ch.pose, k = 1 - Math.exp(-dt * (s.roll > 0 ? 30 : 14));
     for (const key in T) P[key] = key === 'rollSpin' ? T[key] : lerp(P[key], T[key], k);
-    // foot IK: sample ground under each foot and adapt pelvis/knees
-    if (ch.onGround && !ch.climbing && World.hf) {
-      const c = Math.cos(ch.yaw), sn = Math.sin(ch.yaw), w = .12;
-      const gl = World.ground(ch.x - c * w, ch.z + sn * w, ch.y + .4).h, gr = World.ground(ch.x + c * w, ch.z - sn * w, ch.y + .4).h;
-      const dl = clamp(gl - ch.y, -.35, .35), dr = clamp(gr - ch.y, -.35, .35);
-      P.slopeY = Math.min(dl, dr, 0) * .9; P.lk += Math.max(0, dl - Math.min(dl, dr)) * 2.2; P.rk += Math.max(0, dr - Math.min(dl, dr)) * 2.2; P.lh -= Math.max(0, dl - Math.min(dl, dr)) * 1.1; P.rh -= Math.max(0, dr - Math.min(dl, dr)) * 1.1;
-    }
   },
 };
 function makeChar(look, o = {}) {
@@ -1638,23 +1631,27 @@ function drawHumanoid(ch, opts = {}) {
   const fl = ch.flash > 0 ? .9 : 0; const em = (c) => fl; const tint = c => ch.flash > 0 ? mixc(c, [1, 1, 1], .7) : c;
   const sc = P.scale || 1;
   const root = A34.trs(mp(), ch.x, ch.y, ch.z, ch.yaw, 0, 0, sc, sc, sc);
-  // foot planting: put the lowest foot sole exactly on the ground (legs: thigh .42, shank .42, hip offset .05, foot sole .07)
-  const ext = (h, k) => .05 + .42 * Math.cos(h) + .42 * Math.cos(k - h) + .07;
-  const Emax = Math.max(ext(P.lh, P.lk), ext(P.rh, P.rk));
-  const hipH = lerp(.93 + P.hipY, Emax + (P.slopeY || 0), P.plant);
+  // Foot IK. Each sole must land on the ground under *that* foot. Vertical leg reach = .12 + .42(cos h + cos(k-h)).
+  const ext = (h, k) => .12 + .42 * Math.cos(h) + .42 * Math.cos(k - h);
+  const lat = .1 * bw, cyw = Math.cos(ch.yaw), syw = Math.sin(ch.yaw); const rel = [0, 0], kk = [P.lk, P.rk], hh = [P.lh, P.rh];
+  if (P.plant > .02 && World.hf) for (let i = 0; i < 2; i++) { const lx = (i ? 1 : -1) * lat, f = .42 * (Math.sin(hh[i]) + Math.sin(hh[i] - kk[i])); const fx = ch.x + lx * cyw + f * syw, fz = ch.z - lx * syw + f * cyw; rel[i] = clamp(World.hf.at(fx, fz) - World.hf.at(ch.x, ch.z) + (World.ground(ch.x, ch.z, ch.y + .6, .6, .2).h - World.hf.at(ch.x, ch.z)), -.45, .45); }
+  const planted0 = 0; const planted = Math.max(ext(hh[0], kk[0]) + rel[0], ext(hh[1], kk[1]) + rel[1]);
+  const hipH = lerp(.93 + P.hipY, planted, P.plant); ch.dbg = { rel: rel.slice(), hipH, h: hh.slice(), k0: [P.lk, P.rk] };
+  if (P.plant > .5) for (let i = 0; i < 2; i++) { const X = clamp((hipH - rel[i] - .12) / .42 - Math.cos(hh[i]), -1, 1), a = Math.acos(X); const c1 = hh[i] + a, c2 = hh[i] - a; const pick = (c1 >= 0 && (c2 < 0 || Math.abs(c1 - kk[i]) <= Math.abs(c2 - kk[i]))) ? c1 : Math.max(0, c2); kk[i] = lerp(kk[i], clamp(pick, 0, 2.4), P.plant); } ch.dbg.k1 = kk.slice();
   let pelvis = joint(root, P.hipX, hipH, 0, P.twist * .3, 0, P.roll * .5);
   if (P.rollSpin) pelvis = joint(pelvis, 0, -.1, 0, 0, P.rollSpin, 0);
   const jc = tint(C.jacket), tc = tint(C.trousers), ac = tint(C.accent), bc = tint(C.boots), sk = tint(C.skin), gc = L.gloves ? tint(C.gloves) : sk;
   part(pelvis, 0, 0, 0, .36 * bw, .2, .24, tc, fl, flags);
   // legs
   for (const side of [-1, 1]) {
-    const h = side < 0 ? P.lh : P.rh, k = side < 0 ? P.lk : P.rk, a = side < 0 ? P.la : P.ra;
+    const h = side < 0 ? P.lh : P.rh, k = side < 0 ? kk[0] : kk[1], a = side < 0 ? P.la : P.ra;
     const th = joint(pelvis, side * .1 * bw, -.05, 0, 0, -h, side * .03);
     part(th, 0, -.21, 0, .15 * bw, .44, .17, tc, fl, flags);
     const sh = joint(th, 0, -.42, 0, 0, k, 0);
     part(sh, 0, -.2, 0, .13 * bw, .42, .14, L.boots === 1 ? bc : tc, fl, flags);
     if (L.boots !== 1) part(sh, 0, -.33, 0, .14 * bw, .14, .15, bc, fl, flags);
     const ft = joint(sh, 0, -.42, 0, 0, -k + h + a - .0, 0);
+    (ch.sole || (ch.sole = [null, null]))[side < 0 ? 0 : 1] = A34.pt(ft, 0, -.07, .06); // world sole point (for QA measurement)
     part(ft, 0, -.03, .06, .13 * bw, .08, .27, L.boots === 2 ? tint([.85, .85, .8]) : bc, fl, flags);
   }
   // torso

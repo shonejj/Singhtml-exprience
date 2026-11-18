@@ -61,7 +61,7 @@ Static geometry is merged into 32 m chunks with a separate detail LOD buffer and
 
 - **No hardware ray tracing.** No standard browser API exposes it, and the game does not claim it. The "advanced" option only raises the quality of the screen-space effects. WebGPU is detected but never required.
 - **WebGL2 is required.** There is no Canvas2D fallback renderer. Unsupported browsers get an explanatory screen.
-- **Mobile was verified only in desktop browser emulation; the install prompt and the landscape lock are browser/OS behaviours and could not be exercised headlessly (Chrome reports no installability errors; fullscreen on tap was verified)**, not on physical Android hardware. Real-device performance is unverified, although automatic tiering and dynamic resolution are designed for it.
+- **Mobile was verified only in desktop browser emulation, not on physical Android or iOS hardware.** Verified headlessly: a touch-only run of the Chapter 1 relay, boss and Mara sequence at 360 px height; Chrome reports no installability errors at the real `/Singhtml-exprience/` subpath; offline loading; fullscreen on tap. Not verifiable headlessly: the browser's install prompt itself, the landscape orientation lock on a real device, and iOS behaviour (Safari cannot lock orientation, so the rotate prompt remains the fallback).
 - Worlds are seeded procedural compositions built from a hand-authored object library. They are not hand-sculpted levels.
 - Dialogue is subtitled with synthesized "radio voice" babble. There is no recorded voice acting.
 
