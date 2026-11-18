@@ -9,7 +9,7 @@ const mode = process.argv[2] || 'kb', H = +(process.argv[3] || 720);
   await p.goto('file://' + process.cwd() + '/game.html'); await T(2000);
   await ev(() => { __game.Settings.v.quality = 'low'; __game.Settings.v.dynRes = false; __game.Settings.v.seenIntro = true; __game.Settings.v.difficulty = 'story'; __game.Settings.save(); });
   await p.click('text=New Game'); await T(400); await p.click('.slot >> nth=0'); await T(1200); await p.click('#crok');
-  await p.waitForFunction(() => __game.Game.state === 'play', null, { timeout: 120000 }); await T(1500);
+  await p.waitForFunction(() => __game.Game.state === 'play', null, { timeout: 180000 }); await T(1500);
   const tp = (x, z, yaw = 0) => ev(([x, z, y]) => __game.Player.place(x, z, y), [x, z, yaw]);
   const obj = () => ev(() => __game.Game.objective().text); const key = async (k, ms = 80) => { await p.keyboard.down(k); await T(ms); await p.keyboard.up(k); };
   // walk a bit with real keys

@@ -174,6 +174,29 @@ body.touchui #weap{bottom:auto;top:calc(56px + var(--sat))}body.touchui #weap .b
 .confirm{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);pointer-events:auto;z-index:40}
 #perf{position:absolute;left:4px;bottom:4px;font-size:11px;color:#9f9;display:none;pointer-events:none;text-shadow:0 1px #000}
 .hint{color:var(--cyan)}
+
+/* ---- game-feel pass: calmer type, no corner brackets, text menus, underline tabs ---- */
+.panel{background:linear-gradient(180deg,rgba(14,16,24,.94),rgba(8,9,14,.96));border:1px solid #232b3c;border-radius:6px;box-shadow:0 20px 70px rgba(0,0,0,.65)}
+.panel:before,.panel:after{display:none}
+.ph{text-transform:none;letter-spacing:.04em;font-size:17px;color:var(--text);border-bottom:1px solid #1d2433;padding:12px 18px}
+button,.btn{text-transform:none;letter-spacing:.02em;font-size:15px;border-radius:4px;border:1px solid #2c3550;background:rgba(255,255,255,.03)}
+button:hover,button:focus-visible,button.sel{background:rgba(255,181,71,.1);border-color:var(--amber);color:var(--amber2)}
+button.prim{background:rgba(255,181,71,.16)}
+.tabs{gap:2px}.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:8px 12px;font-size:14px;color:var(--mute)}
+.tabs button.sel,.tabs button:hover{border-bottom-color:var(--amber);color:var(--amber2);background:none}
+#kitsub{padding:2px 14px 0;border-bottom:1px solid #1d2433}#kitsub button{font-size:13px;padding:6px 12px}
+#title .menu{gap:2px;min-width:0}
+#title .menu button{background:none;border:0;border-left:3px solid transparent;border-radius:0;font-size:clamp(17px,2.6vw,24px);letter-spacing:.06em;padding:9px 18px;color:#c9cfdd;text-shadow:0 2px 6px #000}
+#title .menu button:hover,#title .menu button:focus-visible,#title .menu button.sel{border-left-color:var(--amber);color:#fff;background:linear-gradient(90deg,rgba(255,181,71,.22),transparent)}
+#title .menu button:disabled{display:none}
+#title .menu button.sel:before,#title .menu button:focus-visible:before{content:none}
+#title .logo .t2{letter-spacing:.35em}
+.slot{border-radius:5px;background:rgba(255,255,255,.02)}
+#toast{top:calc(14% + var(--sat))}#toast div{background:rgba(6,8,12,.78);border:0;border-left:3px solid var(--amber);border-radius:3px;letter-spacing:.02em;text-align:left;animation-duration:2.6s}
+#hud{font-size:14px}#compass{transition:opacity .6s}#compass.idle{opacity:.28}
+#weap .w{letter-spacing:.06em;font-size:15px}#weap{transition:opacity .4s}#weap.idle .bar,#weap.idle .small{opacity:0}
+#obj b{letter-spacing:.06em;font-size:12px}
+.row label{color:var(--text)}
 </style>
 </head>
 <body>
@@ -228,8 +251,8 @@ body.touchui #weap{bottom:auto;top:calc(56px + var(--sat))}body.touchui #weap .b
 <div class="screen" id="creator"><div class="panel"><div class="ph"><span>Explorer Profile</span><span class="sp"></span><span class="small" id="crsub"></span></div>
   <div class="pb"><div class="opts" id="cropts"></div><div class="pv" id="crpv"><div class="anims" id="cranims"></div></div></div>
   <div class="pf"><button id="crrand">Randomize</button><button data-back>Back</button><button class="prim" id="crok">Begin Expedition</button></div></div></div>
-<div class="screen" id="settings"><div class="panel" style="width:min(880px,100%);height:min(720px,100%)"><div class="ph"><span>Settings</span><span class="sp"></span><div class="tabs" id="settabs"></div></div><div class="pb" id="setbody" style="flex:1"></div><div class="pf"><button id="setdef">Defaults</button><button data-back class="prim">Done</button></div></div></div>
-<div class="screen" id="kit"><div class="panel"><div class="ph"><span>Field Kit</span><span class="sp"></span><div class="tabs" id="kittabs"></div></div><div class="pb" id="kitbody"></div><div class="pf" id="kitfoot"></div></div></div>
+<div class="screen" id="settings"><div class="panel" style="width:min(880px,100%);height:min(720px,100%)"><div class="ph"><span>Options</span><span class="sp"></span><div class="tabs" id="settabs"></div></div><div class="pb" id="setbody" style="flex:1"></div><div class="pf"><button id="setdef">Defaults</button><button data-back class="prim">Done</button></div></div></div>
+<div class="screen" id="kit"><div class="panel"><div class="ph"><span>Field Kit</span><span class="sp"></span><div class="tabs" id="kittabs"></div></div><div class="tabs" id="kitsub" style="display:none"></div><div class="pb" id="kitbody"></div><div class="pf" id="kitfoot"></div></div></div>
 <div class="screen" id="puz"><div class="panel"><div class="ph"><span id="puztitle">Signal</span><span class="sp"></span><span class="small" id="puzsub"></span></div><div class="pb"><canvas id="puzc" width="350" height="200"></canvas><div class="ctr" id="puzctr"></div><div class="small hint" id="puzhint" style="text-align:center;margin-top:8px"></div></div><div class="pf"><button id="puzhintb">Hint</button><button id="puzquit">Leave</button></div></div></div>
 <div class="screen" id="loading" style="flex-direction:column;background:#000"><div class="small" style="letter-spacing:.5em;color:var(--amber);margin-bottom:12px" id="loadt">ESTABLISHING SIGNAL</div><div class="bar"><i id="loadbar" style="width:0"></i></div><div class="tip" id="loadtip"></div></div>
 <div class="screen" id="death" style="flex-direction:column;background:rgba(20,0,0,.55)"><div style="font-size:clamp(22px,4vw,40px);letter-spacing:.3em;color:var(--red)">SIGNAL LOST</div><div class="small" id="deathtip" style="margin:12px 0 18px;max-width:520px;text-align:center"></div><div class="menu" style="min-width:220px"><button id="retry" class="prim">Retry from checkpoint</button><button id="deathmenu">Main menu</button></div></div>

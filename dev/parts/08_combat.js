@@ -129,7 +129,7 @@ const Enemies = {
     e.hp -= dmg * k; e.flash = .12; e.stagger += dmg * k / (e.heavy ? 90 : 30); if (kb) { e.vx += kb[0] * (e.heavy ? .02 : .08); e.vz += kb[1] * (e.heavy ? .02 : .08); }
     Audio2.sfx('echo_hurt', [e.x, e.y + 1, e.z]); FX.burst(e.x, e.y + e.aimH, e.z, 6, e.T.glow, 2, .4, .45, true);
     if (e.state !== 'chase' && e.state !== 'attack') this.alert(e, [Player.x, Player.y, Player.z]);
-    Game.dmgNumber(e.x, e.y + e.aimH + .6, Math.round(dmg * k), k > 1);
+    Game.dmgNumber(e.x, e.y + e.aimH + .6, e.z, Math.round(dmg * k), k > 1);
     if (e.hp <= 0) this.kill(e);
   },
   kill(e) { e.dead = true; e.deadT = 0; Audio2.sfx('echo_die', [e.x, e.y + 1, e.z]); FX.burst(e.x, e.y + e.aimH, e.z, 40, e.T.glow, 3, 1.4, .7, true, -.2); FX.burst(e.x, e.y + e.aimH, e.z, 20, e.T.col, 2, 1, .6);

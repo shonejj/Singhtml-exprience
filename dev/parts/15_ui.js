@@ -6,7 +6,7 @@ const UI = {
   dmgNums: [], stack: [],
   show(id) { $(id).classList.add('on'); }, hide(id) { $(id).classList.remove('on'); },
   hideAll() { document.querySelectorAll('.screen.on').forEach(s => s.classList.remove('on')); },
-  toast(t, cls) { const d = document.createElement('div'); d.textContent = t; if (cls) d.className = cls; $('toast').appendChild(d); while ($('toast').children.length > 4) $('toast').firstChild.remove(); setTimeout(() => d.remove(), 3400); },
+  toast(t, cls) { const d = document.createElement('div'); d.textContent = t; if (cls) d.className = cls; $('toast').appendChild(d); while ($('toast').children.length > 2) $('toast').firstChild.remove(); setTimeout(() => d.remove(), 2600); },
   fmtTime(s) { s = Math.floor(s || 0); return `${Math.floor(s / 3600)}h ${String(Math.floor(s / 60) % 60).padStart(2, '0')}m`; },
   tip() { return ['The Echoed hunt by sound. Crouch, and they lose you.', 'Scan often — Vesper-9 hides more than it shows.', 'Every camera shows the same world. Try them all.', 'Hidden frequencies are scattered across all eight regions.', 'Some heights need tools you have not found yet. Come back.', 'Records you recover are kept in your journal, with evidence marked.', 'Your crew remember things they should not.'][Math.floor(Math.random() * 7)]; },
   confirm(text, yes) { $('confirmtxt').textContent = text; $('confirm').style.display = 'flex'; $('confirmyes').onclick = () => { $('confirm').style.display = 'none'; Audio2.sfx('ui_ok'); yes(); }; $('confirmno').onclick = () => { $('confirm').style.display = 'none'; Audio2.sfx('ui_back'); }; },
@@ -27,10 +27,10 @@ const UI = {
     const add = (t, fn, dis) => { const b = document.createElement('button'); b.textContent = t; b.disabled = !!dis; b.onclick = () => { Audio2.init(); Audio2.sfx('ui_ok'); fn(); }; b.onmouseenter = () => Audio2.sfx('ui'); m.appendChild(b); return b; };
     add('Continue', () => Game.continueFrom(latest.slot, latest.data), !latest);
     add('New Game', () => this.slots('new')); add('Load Game', () => this.slots('load'), !latest);
-    add('Character Customization', () => this.creator(null, true)); add('Settings', () => this.settings('graphics')); add('Controls', () => this.settings('controls')); add('Accessibility', () => this.settings('access')); add('Credits', () => this.showCredits());
-    add('Quit', () => this.confirm('Close the game tab? (Browsers may block scripted closing — you can simply close the tab.)', () => { try { window.close(); } catch (e) { } UI.toast('You can close this tab safely. Progress is saved.'); }));
+    add('Options', () => this.settings('graphics')); add('Credits', () => this.showCredits());
+    if (typeof Install !== 'undefined' && Install.can()) add('Install app', () => Install.prompt());
     setTimeout(() => m.querySelector('button:not(:disabled)') && m.querySelector('button:not(:disabled)').focus(), 50);
-    const g = Save.global(); $('titleinfo').innerHTML = (latest ? `Last save: ${REGIONS[latest.data.region].name} · ${new Date(latest.data.time).toLocaleString()}<br>` : '') + (g.endings && g.endings.length ? `Endings seen: ${g.endings.length}/4<br>` : '') + (Save.ok ? '' : '<span style="color:var(--red)">' + Save.err + '</span><br>') + `v${VERSION} · ${R.gpuName ? R.gpuName.slice(0, 40) : 'WebGL2'} · ${R.autoTier} tier`;
+    const g = Save.global(); $('titleinfo').innerHTML = (latest ? `Continue: ${REGIONS[latest.data.region].name}<br>` : '') + (g.endings && g.endings.length ? `Endings: ${g.endings.length}/4<br>` : '') + (Save.ok ? '' : '<span style="color:var(--red)">' + Save.err + '</span>');
   },
   slots(mode) {
     this.back = () => { this.hide('slots'); this.show('title'); }; this.hide('title'); this.show('slots'); $('slotstitle').textContent = mode === 'new' ? 'New Game — choose a slot' : mode === 'save' ? 'Save Game' : 'Load Game'; const L = $('slotlist'); L.innerHTML = '';
@@ -86,7 +86,7 @@ const UI = {
   },
   /* ---------------- settings ---------------- */
   settings(tab, fromKit) {
-    this.setTab = tab; this.hideAll(); this.show('settings'); this.back = () => { this.hide('settings'); if (fromKit || Game.S) { this.openKit('settings'); } else { this.show('title'); this.titleMenu(); } }; this.setFrom = fromKit;
+    this.setTab = tab; this.hideAll(); this.show('settings'); this.back = () => { this.hide('settings'); if (Game.S) { this.openKit('save'); } else { this.show('title'); this.titleMenu(); } }; this.setFrom = fromKit;
     const tabs = [['graphics', 'Graphics'], ['audio', 'Audio'], ['gameplay', 'Gameplay'], ['controls', 'Controls'], ['access', 'Accessibility']]; const T = $('settabs'); T.innerHTML = '';
     for (const [k, n] of tabs) { const b = document.createElement('button'); b.textContent = n; b.className = k === tab ? 'sel' : ''; b.onclick = () => this.settings(k, fromKit); T.appendChild(b); }
     const B = $('setbody'); B.innerHTML = ''; const v = Settings.v;
@@ -119,14 +119,17 @@ const UI = {
     if (tab === 'access') { chk('Subtitle background', 'subBg'); rng('Subtitle size', 'subSize', 12, 30, 1, x => x + 'px'); rng('UI scale', 'uiScale', .75, 1.4, .05, pct); chk('High-contrast UI', 'contrast'); chk('Colour-blind friendly indicators', 'colorblind'); chk('Reduced motion (less shake, distortion, flicker)', 'reducedMotion');
       chk('Audio cues → on-screen captions for important sounds', 'audioCues'); chk('Simplified puzzle hints (wider tolerance, sequence shown)', 'puzzleHints'); chk('Toggle crouch', 'toggleCrouch'); chk('Toggle sprint', 'toggleSprint');
       rng('Touch controls size', 'touchSize', .7, 1.5, .05, pct); rng('Touch controls opacity', 'touchOpacity', .2, 1, .05, pct); chk('Left-handed touch layout', 'leftHanded'); }
+    { const a = document.createElement('div'); a.className = 'small'; a.style.cssText = 'margin-top:18px;opacity:.7'; a.textContent = `The Last Frequency v${VERSION} · ${R.gpuName ? R.gpuName.slice(0, 60) : 'WebGL2'} · auto tier: ${R.autoTier}`; B.appendChild(a); }
     $('setdef').onclick = () => this.confirm('Restore all settings to defaults?', () => { const keep = Settings.v.seenIntro; Settings.v = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); Settings.v.seenIntro = keep; Settings.save(); this.settings(tab, fromKit); });
   },
   /* ---------------- field kit (pause) ---------------- */
   openKit(tab = 'inventory') {
     if (!Game.S) return; if (Game.state === 'play' || Game.state === 'pause' || Game.state === 'creator') Game.setState('pause'); this.hideAll(); this.show('kit'); this.kitTab = tab; Audio2.sfx('ui');
     this.atStation = World.inter.some(t => t.kind === 'station' && dist2(t.x, t.z, Player.x, Player.z) < 16);
-    const tabs = [['inventory', 'Inventory'], ['character', 'Character'], ['map', 'Map'], ['journal', 'Journal'], ['quests', 'Objectives'], ['upgrades', 'Upgrades'], ['settings', 'Settings'], ['save', 'Save']]; const T = $('kittabs'); T.innerHTML = '';
-    for (const [k, n] of tabs) { const b = document.createElement('button'); b.textContent = n; b.className = k === tab ? 'sel' : ''; b.onclick = () => this.openKit(k); T.appendChild(b); }
+    const groups = [['inventory', 'Gear', ['inventory', 'upgrades']], ['map', 'Map', ['map']], ['journal', 'Journal', ['journal', 'quests']], ['character', 'Explorer', ['character']], ['save', 'System', ['save', 'settings']]]; const subName = { inventory: 'Items', upgrades: 'Upgrades', journal: 'Records', quests: 'Objectives', save: 'Save & load', settings: 'Options' };
+    const T = $('kittabs'); T.innerHTML = ''; const grp = groups.find(g => g[2].includes(tab)) || groups[0];
+    for (const [k, n, subs] of groups) { const b = document.createElement('button'); b.textContent = n; b.className = k === grp[0] ? 'sel' : ''; b.onclick = () => this.openKit(subs[0]); T.appendChild(b); }
+    const SB = $('kitsub'); SB.innerHTML = ''; SB.style.display = grp[2].length > 1 ? 'flex' : 'none'; if (grp[2].length > 1) for (const k of grp[2]) { const b = document.createElement('button'); b.textContent = subName[k]; b.className = k === tab ? 'sel' : ''; b.onclick = () => this.openKit(k); SB.appendChild(b); }
     const F = $('kitfoot'); F.innerHTML = ''; const res = document.createElement('button'); res.className = 'prim'; res.textContent = 'Resume'; res.onclick = () => this.resume(); const mm = document.createElement('button'); mm.textContent = 'Main menu'; mm.onclick = () => this.confirm('Return to the main menu? Unsaved progress since your last checkpoint will be lost.', () => this.toTitle()); F.append(mm, res);
     const B = $('kitbody'); B.innerHTML = ''; const S = Game.S; this.back = () => this.resume();
     const two = (items, render) => { B.innerHTML = '<div class="two"><div class="list" id="kl"></div><div class="detail" id="kd"></div></div>'; const L = $('kl'); items.forEach((it, i) => { const d = document.createElement('div'); d.className = 'it' + (i === 0 ? ' sel' : ''); d.tabIndex = 0; d.innerHTML = it.label; const pick = () => { L.querySelectorAll('.it').forEach(x => x.classList.remove('sel')); d.classList.add('sel'); $('kd').innerHTML = render(it); if (it.after) it.after(); }; d.onclick = pick; d.onfocus = pick; L.appendChild(d); }); if (items[0]) { $('kd').innerHTML = render(items[0]); if (items[0].after) items[0].after(); } else $('kd').textContent = 'Nothing here yet.'; };
@@ -204,7 +207,7 @@ const UI = {
     $('stbar').firstChild.style.width = Player.stamina + '%'; $('stbar').style.opacity = Player.stamina < 99 ? 1 : 0;
     $('salv').textContent = `⬡ ${S.salvage}` + (S.cores ? ` · ◆ ${S.cores}` : '') + (Player.lamp ? ' · ☀' : '') + (p.crouch ? ' · stealth' : '');
     const W = Player.weapon(), cap = 100 + Game.up('cooling') * 25; $('wname').textContent = W.name.toUpperCase(); $('heatbar').firstChild.style.width = Math.min(100, Player.heat / cap * 100) + '%'; $('heatbar').classList.toggle('hot', Player.overheat > 0 || Player.heat > cap * .8);
-    $('wsub').textContent = (Player.overheat > 0 ? 'OVERHEATED' : Player.heat > cap * .7 ? `[${Input.glyph('reload')}] vent` : '') + (Game.has('burst') ? ` · burst ${Player.burstCd > 0 ? Math.ceil(Player.burstCd) + 's' : 'ready'}` : '');
+    $('weap').classList.toggle('idle', !(Player.heat > 6 || Player.overheat > 0 || Player.fireHold > 0 || Player.burstCd > 0)); $('wsub').textContent = (Player.overheat > 0 ? 'OVERHEATED' : Player.heat > cap * .7 ? `[${Input.glyph('reload')}] vent` : '') + (Game.has('burst') ? ` · burst ${Player.burstCd > 0 ? Math.ceil(Player.burstCd) + 's' : 'ready'}` : '');
     const o = Game.objective(); $('obj').innerHTML = o ? `<b>${o.q.title.toUpperCase()}</b>${o.text.replace('[scan]', '[' + Input.glyph('scan') + ']')}` : '';
     const sideQ = QUESTS.filter(q => !q.main && S.quests[q.id] !== undefined && S.quests[q.id] < q.steps.length && q.ch === S.region); $('sig').textContent = sideQ.length ? '◇ ' + (typeof sideQ[0].steps[S.quests[sideQ[0].id]].t === 'function' ? sideQ[0].steps[S.quests[sideQ[0].id]].t() : sideQ[0].steps[S.quests[sideQ[0].id]].t) : '';
     // compass
@@ -213,7 +216,7 @@ const UI = {
     if (o && o.step && o.step.at) { const d = Math.hypot(o.step.at[0] - p.x, o.step.at[1] - p.z); mark(Math.atan2(o.step.at[0] - p.x, o.step.at[1] - p.z), '▼ ' + Math.round(d) + 'm', 'm'); }
     if (Scanner.target && Scanner.sig > .3) mark(Math.atan2(Scanner.target.x - p.x, Scanner.target.z - p.z), '◈', 's');
     for (const e of Enemies.list) if (!e.dead && e.marked > 0) mark(Math.atan2(e.x - p.x, e.z - p.z), '◆', 'e');
-    C.innerHTML = html;
+    C.innerHTML = html; const yawMoved = Math.abs(angDiff(this._cy ?? Cam.yaw, Cam.yaw)) > .002 || p.speed > .5; this._cy = Cam.yaw; if (yawMoved) this._cIdle = Game.time; C.classList.toggle('idle', Game.time - (this._cIdle || 0) > 3);
     // interaction prompt
     const best = this.bestInter(); const pr = $('prompt'); if (best && Game.state === 'play') { pr.style.display = 'block'; pr.innerHTML = `<kbd>${Input.glyph('interact')}</kbd>${best.label}`; } else pr.style.display = 'none'; this.inter = best;
     // reticle

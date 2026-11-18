@@ -6,6 +6,8 @@ An atmospheric 2.5D/3D pixel-art science-fiction adventure on the silent planet 
 
 ## Run it
 
+- **Install as an app (mobile/desktop):** open the site in Chrome/Edge/Android and use the **Install app** button on the title screen (or the browser menu). On iPhone/iPad use Share → Add to Home Screen. The installed app opens fullscreen in landscape. The game itself is still one `index.html`; `manifest.webmanifest`, `sw.js` and the icons exist only because browsers require separate files for installability and offline play.
+
 - **Online:** every push to `main` deploys to GitHub Pages through `.github/workflows/pages.yml`.
   The first time only, Pages may need **Settings → Pages → Source: GitHub Actions** set in the repository settings.
 - **Locally:** open `index.html` in a current Chrome, Edge, Firefox or Safari 15+. Serving it also works, for example `python3 -m http.server`.
@@ -59,7 +61,7 @@ Static geometry is merged into 32 m chunks with a separate detail LOD buffer and
 
 - **No hardware ray tracing.** No standard browser API exposes it, and the game does not claim it. The "advanced" option only raises the quality of the screen-space effects. WebGPU is detected but never required.
 - **WebGL2 is required.** There is no Canvas2D fallback renderer. Unsupported browsers get an explanatory screen.
-- **Mobile was verified only in desktop browser emulation**, not on physical Android hardware. Real-device performance is unverified, although automatic tiering and dynamic resolution are designed for it.
+- **Mobile was verified only in desktop browser emulation; the install prompt and the landscape lock are browser/OS behaviours and could not be exercised headlessly (Chrome reports no installability errors; fullscreen on tap was verified)**, not on physical Android hardware. Real-device performance is unverified, although automatic tiering and dynamic resolution are designed for it.
 - Worlds are seeded procedural compositions built from a hand-authored object library. They are not hand-sculpted levels.
 - Dialogue is subtitled with synthesized "radio voice" babble. There is no recorded voice acting.
 
@@ -72,3 +74,6 @@ Automated Playwright runs, using headless Chromium on SwiftShader (a CPU GPU emu
 - Screenshots of all 8 regions in several camera rigs, a mobile-landscape emulation with touch controls, and console-error capture.
 
 See the commit history for the details of each QA iteration.
+
+## Source
+`dev/` holds the source parts (`dev/parts/*`) and the Playwright test scripts. `dev/build.sh` concatenates the parts into `game.html`; copy it to `index.html` to publish.
