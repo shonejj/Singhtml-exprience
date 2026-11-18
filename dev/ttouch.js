@@ -33,7 +33,7 @@ const { chromium } = require('playwright');
   const t0 = Date.now(); let scans = 0, rounds = 0;
   while (Date.now() - t0 < 170000 && await ev(() => __game.Boss.active && __game.Boss.b && !__game.Boss.b.dead)) {
     const st = await ev(() => { const b = __game.Boss.b, P = __game.Player; return { revealed: b.revealed, dead: P.dead, d: Math.hypot(b.x - P.x, b.z - P.z), a: Math.atan2(b.x - P.x, b.z - P.z) }; });
-    if (st.dead) { await ev(() => __game.Game.retry()); await T(500); continue; }
+    if (st.dead) { await T(2200); await tapSel('#retry'); await T(600); continue; }
     if (st.revealed <= 0) { await hold('[data-a="scan"]', 650, 6); scans++; }
     // face the boss with the virtual stick (screen-up = away from camera); use stick toward boss direction relative to camera yaw
     const rel = await ev(() => { const b = __game.Boss.b, P = __game.Player, cy = __game.Cam.yaw; const dx = b.x - P.x, dz = b.z - P.z; const fx = Math.sin(cy), fz = Math.cos(cy), rx = -Math.cos(cy), rz = Math.sin(cy); return [dx * rx + dz * rz, -(dx * fx + dz * fz)]; });

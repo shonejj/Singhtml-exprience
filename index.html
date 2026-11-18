@@ -1634,10 +1634,10 @@ function drawHumanoid(ch, opts = {}) {
   // Foot IK. Each sole must land on the ground under *that* foot. Vertical leg reach = .12 + .42(cos h + cos(k-h)).
   const ext = (h, k) => .12 + .42 * Math.cos(h) + .42 * Math.cos(k - h);
   const lat = .1 * bw, cyw = Math.cos(ch.yaw), syw = Math.sin(ch.yaw); const rel = [0, 0], kk = [P.lk, P.rk], hh = [P.lh, P.rh];
-  if (P.plant > .02 && World.hf) for (let i = 0; i < 2; i++) { const lx = (i ? 1 : -1) * lat, f = .42 * (Math.sin(hh[i]) + Math.sin(hh[i] - kk[i])); const fx = ch.x + lx * cyw + f * syw, fz = ch.z - lx * syw + f * cyw; rel[i] = clamp(World.hf.at(fx, fz) - World.hf.at(ch.x, ch.z) + (World.ground(ch.x, ch.z, ch.y + .6, .6, .2).h - World.hf.at(ch.x, ch.z)), -.45, .45); }
-  const planted0 = 0; const planted = Math.max(ext(hh[0], kk[0]) + rel[0], ext(hh[1], kk[1]) + rel[1]);
-  const hipH = lerp(.93 + P.hipY, planted, P.plant); ch.dbg = { rel: rel.slice(), hipH, h: hh.slice(), k0: [P.lk, P.rk] };
-  if (P.plant > .5) for (let i = 0; i < 2; i++) { const X = clamp((hipH - rel[i] - .12) / .42 - Math.cos(hh[i]), -1, 1), a = Math.acos(X); const c1 = hh[i] + a, c2 = hh[i] - a; const pick = (c1 >= 0 && (c2 < 0 || Math.abs(c1 - kk[i]) <= Math.abs(c2 - kk[i]))) ? c1 : Math.max(0, c2); kk[i] = lerp(kk[i], clamp(pick, 0, 2.4), P.plant); } ch.dbg.k1 = kk.slice();
+  if (P.plant > .02 && World.hf) for (let i = 0; i < 2; i++) { const lx = (i ? 1 : -1) * lat, f = .42 * (Math.sin(hh[i]) + Math.sin(hh[i] - kk[i])); const fx = ch.x + lx * cyw + f * syw, fz = ch.z - lx * syw + f * cyw; rel[i] = clamp(World.ground(fx, fz, ch.y + .5, .5, .1).h - ch.y, -.45, .45); }
+  const planted = Math.max(ext(hh[0], kk[0]) + rel[0], ext(hh[1], kk[1]) + rel[1]);
+  const hipH = lerp(.93 + P.hipY, planted, P.plant);
+  if (P.plant > .5) for (let i = 0; i < 2; i++) { const X = clamp((hipH - rel[i] - .12) / .42 - Math.cos(hh[i]), -1, 1), a = Math.acos(X); const c1 = hh[i] + a, c2 = hh[i] - a; const pick = (c1 >= 0 && (c2 < 0 || Math.abs(c1 - kk[i]) <= Math.abs(c2 - kk[i]))) ? c1 : Math.max(0, c2); kk[i] = lerp(kk[i], clamp(pick, 0, 2.4), P.plant); }
   let pelvis = joint(root, P.hipX, hipH, 0, P.twist * .3, 0, P.roll * .5);
   if (P.rollSpin) pelvis = joint(pelvis, 0, -.1, 0, 0, P.rollSpin, 0);
   const jc = tint(C.jacket), tc = tint(C.trousers), ac = tint(C.accent), bc = tint(C.boots), sk = tint(C.skin), gc = L.gloves ? tint(C.gloves) : sk;
