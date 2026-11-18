@@ -200,7 +200,7 @@ const Input = {
     });
     document.addEventListener('gesturestart', e => e.preventDefault());
     addEventListener('touchstart', () => { this.device = 'touch'; }, { passive: true, capture: true });
-    addEventListener('touchmove', e => { if (window.Game && Game.state === 'play') e.preventDefault(); }, { passive: false });
+    addEventListener('touchmove', e => { if (window.Game && Game.state === 'play' && !e.target.closest('#puz,#kit,#settings,.screen')) e.preventDefault(); }, { passive: false });
   },
   // gamepad (standard mapping)
   pollPad() {

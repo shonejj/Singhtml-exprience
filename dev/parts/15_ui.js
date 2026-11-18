@@ -223,7 +223,7 @@ const UI = {
     // world-space markers + damage numbers
     const M = $('markers'); let mh2 = '';
     for (const e of Enemies.list) { if (e.dead || !(e.marked > 0) || e.isBoss) continue; const s = R.toScreen(e.x, e.y + e.aimH + (e.heavy ? 2 : 1.2), e.z); if (s && s[3]) mh2 += `<div class="e" style="left:${s[0]}px;top:${s[1]}px">◆ ${e.T.name.replace('Echoed ', '')}${e.state === 'chase' ? ' !' : ''}</div>`; }
-    if (best && best.kind === 'npc' && Game.state === 'play') { }
+    if (o && o.step && o.step.at && Game.state === 'play') { const ty = World.hf.at(o.step.at[0], o.step.at[1]); const d = Math.hypot(o.step.at[0] - p.x, o.step.at[1] - p.z); if (d > 4) { const s = R.toScreen(o.step.at[0], ty + 3.2 + Math.sin(Game.time * 3) * .2, o.step.at[1]); if (s && s[3]) mh2 += `<div class="q" style="left:${s[0]}px;top:${s[1]}px">▼ ${Math.round(d)}m</div>`; } }
     for (let i = this.dmgNums.length - 1; i >= 0; i--) { const d = this.dmgNums[i]; d.t += Game.dt; if (d.t > .9) { this.dmgNums.splice(i, 1); continue; } const s = R.toScreen(d.x, d.y + d.t * .8, d.z); if (s && s[3]) mh2 += `<div class="${d.crit ? 'q' : ''}" style="left:${s[0]}px;top:${s[1]}px;color:${d.crit ? 'var(--amber)' : '#fff'};opacity:${1 - d.t}">${d.n}</div>`; }
     if (this.dmgNums.length > 20) this.dmgNums.splice(0, this.dmgNums.length - 20);
     M.innerHTML = mh2;

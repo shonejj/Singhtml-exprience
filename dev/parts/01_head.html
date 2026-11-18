@@ -140,6 +140,9 @@ input[type=checkbox]{accent-color:var(--amber);width:18px;height:18px}
 #puzc{width:100%;max-width:700px;aspect-ratio:7/4;image-rendering:pixelated;background:#050a0e;border:1px solid #1f3a44;touch-action:none;display:block;margin:0 auto}
 #puz .ctr{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:10px}
 #puz .ctr .row{border:0;min-width:240px}
+#puz .ctr .dial{gap:6px}#puz .ctr .dial input{width:150px;touch-action:pan-x}#puz button.st{width:44px;height:44px;padding:0;font-size:16px;touch-action:manipulation;flex:none}
+@media (max-height:560px){#puz .panel{width:min(940px,100%)!important;max-height:100%}#puz .pb{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:10px;align-items:center;padding:8px}#puz #puzc{max-height:calc(100vh - 120px);width:100%}#puz .ctr{flex-direction:column;flex-wrap:nowrap;margin:0;gap:4px}#puz .ctr .row{min-width:0}#puz .ctr .dial input{width:100%;flex:1;min-width:60px}#puz #puzhint{grid-column:1/3;margin-top:0;font-size:11px}#puz .ph{padding:6px 10px}#puz .pf{padding:6px 10px}}
+#puz,#puz *{touch-action:manipulation}#puz input[type=range]{touch-action:pan-x}
 /* touch */
 #touch{display:none}
 #touch.on{display:block}

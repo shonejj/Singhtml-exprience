@@ -39,7 +39,7 @@ const Boss = {
     if (D.weak === 'scan' && b.revealed <= 0) k = .25; if (D.weak === 'burst' && b.shield > 0) { k = .15; if (src.burst) { b.shield = 0; b.shieldT = 6; Audio2.sfx('break', [b.x, b.y + 2, b.z]); FX.burst(b.x, b.y + 2, b.z, 40, [.8, 1, 1], 5, 1, .8, true); Game.cue('Shield shattered!'); } }
     if (D.weak === 'cold' && b.cold <= 0) k = .2; if (D.weak === 'pylons' && b.vuln <= 0) k = .2; if (D.weak === 'nodes' && b.vuln <= 0) k = .15;
     if (b.vuln > 0) k *= 2.2; b.hp -= dmg * k; b.flash = .1; Game.dmgNumber(b.x, b.y + b.aimH + 1, Math.round(dmg * k), k > 1);
-    if (k < .3 && Math.random() < .1) Game.cue(D.weak === 'scan' ? 'It shifts out of phase — scan it!' : D.weak === 'cold' ? 'Armored. Its vents are white-hot...' : D.weak === 'pylons' ? 'Roots absorb the energy. The arc pylons?' : D.weak === 'nodes' ? 'The crystal nodes sing in sequence...' : 'Shielded — a resonance burst might break it.');
+    if (k < .3 && (!b.hinted || (!b.hinted2 && Game.time - b.hinted > 12))) { if (b.hinted) b.hinted2 = 1; b.hinted = b.hinted || Game.time; Game.say('sys', D.weak === 'scan' ? `It is out of phase — hold [${Input.glyph('scan')}] to scan it, then strike while it glows.` : D.weak === 'cold' ? 'Its armor holds. Lure it beside the coolant tanks and shoot one.' : D.weak === 'pylons' ? 'The roots absorb damage. Use a burst near a glowing pylon.' : D.weak === 'nodes' ? 'Shoot the crystals in the order they pulse.' : 'Its shield blocks you. Break it with a resonance burst.', { short: false }); } else if (k < .3 && Math.random() < .1) Game.cue(D.weak === 'scan' ? 'It shifts out of phase — scan it!' : D.weak === 'cold' ? 'Armored. Its vents are white-hot...' : D.weak === 'pylons' ? 'Roots absorb the energy. The arc pylons?' : D.weak === 'nodes' ? 'The crystal nodes sing in sequence...' : 'Shielded — a resonance burst might break it.');
     const r = b.hp / b.maxHp; const ph = D.phases.length - 1 - [...D.phases].reverse().findIndex(p => r <= p.at);
     if (ph > b.phase && ph < D.phases.length) { b.phase = ph; b.q = []; Audio2.sfx('boss_roar', [b.x, b.y + 2, b.z]); Cam.shake(.6); FX.burst(b.x, b.y + 2, b.z, 60, D.glow, 6, 1.4, .8, true); Game.onBossPhase(b.id, ph); }
     if (D.talk && r < D.talk && !b.talkDone) { b.talkDone = true; b.state = 'talk'; Game.onBossTalk(b.id); return; }
@@ -226,11 +226,15 @@ const Puzzle = {
     $('puztitle').textContent = def.title || 'Signal'; $('puzsub').textContent = def.sub || ''; $('puzhint').textContent = def.help || '';
     const ctr = $('puzctr'); ctr.innerHTML = '';
     if (def.type === 'tune') { const n = def.dials || 1; P.vals = []; P.target = def.target || Array.from({ length: n }, () => .15 + Math.random() * .7); const names = ['Frequency', 'Phase', 'Amplitude'];
-      for (let i = 0; i < n; i++) { P.vals[i] = (P.target[i] + .35 + Math.random() * .3) % 1; const row = document.createElement('div'); row.className = 'row'; row.innerHTML = `<label>${names[i]}</label><input type="range" min="0" max="1000" value="${P.vals[i] * 1000}" data-i="${i}">`; ctr.appendChild(row); row.querySelector('input').oninput = e => { P.vals[i] = e.target.value / 1000; P.sel = i; }; }
+      for (let i = 0; i < n; i++) { P.vals[i] = (P.target[i] + .35 + Math.random() * .3) % 1; const row = document.createElement('div'); row.className = 'row dial'; row.innerHTML = `<label>${names[i]}</label><button class="st" data-d="-1" aria-label="decrease">◀</button><input type="range" min="0" max="1000" value="${P.vals[i] * 1000}" data-i="${i}"><button class="st" data-d="1" aria-label="increase">▶</button>`; ctr.appendChild(row);
+        const inp = row.querySelector('input'); inp.oninput = e => { P.vals[i] = e.target.value / 1000; P.sel = i; };
+        row.onpointerdown = () => { P.sel = i; };
+        row.querySelectorAll('.st').forEach(b => { let h = null, t0 = 0; const stepOnce = () => { P.sel = i; P.vals[i] = clamp(P.vals[i] + (+b.dataset.d) * .012, 0, 1); inp.value = P.vals[i] * 1000; Audio2.sfx('ui'); };
+          const stop = () => { clearInterval(h); h = null; }; b.onpointerdown = e => { e.preventDefault(); stepOnce(); stop(); t0 = setTimeout(() => { h = setInterval(stepOnce, 70); }, 350); b._t = t0; }; ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { clearTimeout(b._t); stop(); })); }); }
       P.sel = 0; this.osc(true); }
     if (def.type === 'route') this.genRoute(P);
     Game.setState('puzzle'); UI.show('puz'); const c = $('puzc');
-    c.onpointerdown = e => this.click(e);
+    c.onpointerdown = e => { this.click(e); const P = this.cur; if (P && P.type === 'tune') { P.drag = e.clientX; try { c.setPointerCapture(e.pointerId); } catch (er) { } } }; c.onpointermove = e => { const P = this.cur; if (P && P.type === 'tune' && P.drag != null) { const d = (e.clientX - P.drag) / c.getBoundingClientRect().width; P.drag = e.clientX; P.vals[P.sel] = clamp(P.vals[P.sel] + d * .8, 0, 1); const el = $('puzctr').querySelectorAll('input')[P.sel]; if (el) el.value = P.vals[P.sel] * 1000; } }; c.onpointerup = c.onpointercancel = () => { if (this.cur) this.cur.drag = null; };
   },
   osc(on) { if (!Audio2.ok) return; if (on) { const c = Audio2.ctx; this.o1 = c.createOscillator(); this.o2 = c.createOscillator(); this.og = c.createGain(); this.og.gain.value = .04; this.o1.type = 'triangle'; this.o2.type = 'triangle'; this.o1.connect(this.og); this.o2.connect(this.og); this.og.connect(Audio2.bus.sfx); this.o1.start(); this.o2.start(); }
     else if (this.o1) { try { this.o1.stop(); this.o2.stop(); } catch (e) { } this.o1 = null; } },
@@ -238,7 +242,7 @@ const Puzzle = {
   hint() { const P = this.cur; if (!P) return; P.hints++; Audio2.sfx('ui');
     if (P.type === 'tune') { let worst = 0, wi = 0; P.vals.forEach((v, i) => { const d = Math.abs(v - P.target[i]); if (d > worst) { worst = d; wi = i; } }); $('puzhint').textContent = `Hint: ${['Frequency', 'Phase', 'Amplitude'][wi]} is ${P.vals[wi] < P.target[wi] ? 'too low' : 'too high'}. Listen for the beating to slow.`; P.showT = 2; }
     if (P.type === 'route') { const wrong = P.cells.filter(c => c.sol !== undefined && c.rot % (c.sym || 4) !== c.sol % (c.sym || 4)); if (wrong.length) { const c = wrong[0]; c.rot = c.sol; c.locked = true; $('puzhint').textContent = 'Hint: one conduit locked into place.'; } } },
-  tol() { return Settings.v.puzzleHints ? .06 : .035; },
+  tol() { return Settings.v.puzzleHints ? .09 : .06; },
   update(dt) {
     const P = this.cur; if (!P) return; P.t += dt; const c = $('puzc'), g = c.getContext('2d'); const W = c.width, H = c.height; g.fillStyle = '#050a0e'; g.fillRect(0, 0, W, H);
     const I = Input;
@@ -254,7 +258,7 @@ const Puzzle = {
       const noise = Math.min(1, err * 3); g.strokeStyle = ok ? '#8dff9a' : '#6ff3ff'; g.lineWidth = 1.5; g.beginPath(); for (let x = 0; x < W; x += 2) { const y = H / 2 - wave(P.vals, x) * H * .36 + (Math.random() - .5) * noise * 18; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
       g.fillStyle = '#6ff3ff'; g.font = '10px monospace'; g.fillText('SIGNAL COHERENCE ' + Math.round((1 - Math.min(1, err * 3)) * 100) + '%', 8, 14); if (P.showT > 0) { P.showT -= dt; g.fillStyle = '#ffb547'; g.fillText('TARGET ' + P.target.map(v => (v * 100).toFixed(0)).join(' · '), 8, H - 8); }
       if (this.o1) { const f1 = 220 + P.target[0] * 440, f2 = 220 + P.vals[0] * 440 + (n > 1 ? (P.vals[1] - P.target[1]) * 60 : 0); this.o1.frequency.value = f1; this.o2.frequency.value = f2; }
-      if (ok) { P.hold += dt; g.fillStyle = '#8dff9a'; g.fillRect(0, H - 4, W * Math.min(1, P.hold / 1.2), 4); if (P.hold > 1.2) return this.close(true); } else P.hold = 0;
+      if (ok) { P.hold += dt; g.fillStyle = '#8dff9a'; g.fillRect(0, H - 4, W * Math.min(1, P.hold / .8), 4); g.fillText('LOCKING…', W - 70, 14); if (P.hold > .8) return this.close(true); } else { P.hold = 0; if (err < this.tol() * 2.2) { g.fillStyle = '#ffb547'; g.fillText('CLOSE — fine-tune', W - 110, 14); } }
     }
     if (P.type === 'route') this.drawRoute(P, g, W, H, dt);
     if ((I.pressed.has('Escape') || I.pressed.has('Pad1')) && P.t > .2) return this.close(false);
