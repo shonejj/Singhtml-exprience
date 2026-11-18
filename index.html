@@ -106,7 +106,7 @@ input[type=checkbox]{accent-color:var(--amber);width:18px;height:18px}
 #chap .a{letter-spacing:.6em;color:var(--amber);font-size:13px}#chap .b{font-size:clamp(22px,4vw,44px);letter-spacing:.2em;margin-top:10px}#chap .c{color:var(--mute);margin-top:10px;letter-spacing:.3em;font-size:12px}
 #cine{position:absolute;inset:0;pointer-events:none;display:none}
 #cine:before,#cine:after{content:"";position:absolute;left:0;right:0;height:9vh;background:#000}#cine:before{top:0}#cine:after{bottom:0}
-#cinetext{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:clamp(16px,2.4vw,26px);letter-spacing:.12em;color:#efe6d2;text-shadow:0 0 12px #000;padding:0 6vw}
+#cinetext{position:absolute;left:0;right:0;bottom:14%;text-shadow:0 2px 0 #000,0 0 14px #000;text-align:center;font-size:clamp(16px,2.4vw,26px);letter-spacing:.12em;color:#efe6d2;text-shadow:0 0 12px #000;padding:0 6vw}
 #skip{position:absolute;right:calc(16px + var(--sar));bottom:calc(10vh + 10px + var(--sab));pointer-events:auto;display:none;font-size:12px}
 /* Dialogue */
 #dlg{position:absolute;left:50%;bottom:calc(14px + var(--sab));transform:translateX(-50%);width:min(900px,96vw);display:none;pointer-events:auto}
@@ -3249,7 +3249,7 @@ const DLG = {
 /* ---- quests (main per chapter + side quests) ---- */
 const QUESTS = [
   { id: 'q1', ch: 0, main: true, title: 'Signalfall', steps: [
-    { t: 'Leave the crash site', on: 'reach_site', at: [10, 44] }, { t: 'Recover the communication equipment from the drop pod', on: 'cache_scanner', at: [14, 40] },
+    { t: 'Find your crew and the source of the signal — start by leaving the wreck', on: 'reach_site', at: [10, 44] }, { t: 'Recover the communication equipment from the drop pod', on: 'cache_scanner', at: [14, 40] },
     { t: 'Hold [scan] to pulse the frequency scanner', on: 'scan' }, { t: 'Follow the signal to the survey outpost', on: 'reach_outpost', at: [-16, 8] },
     { t: 'Search the outpost', on: 'cache_burst', at: [-20, 9.5] }, { t: 'Reach the relay tower', on: 'reach_tower', at: [12, -20] }, { t: 'Tune the relay to the source frequency', on: 'puzzle_relay1', at: [13.5, -18] },
     { t: 'Find the voice in the crater', on: 'boss_guardian', at: [0, -46] }, { t: 'Talk to the survivor', on: 'talk_mara1', check: () => flag('mara_joined'), at: [8, -32] }, { t: 'Head north with Mara', on: 'exit', at: [0, -66] }] },
@@ -3599,42 +3599,81 @@ const Game = {
     Combat.shots = []; Enemies.list.forEach(e => { if (!e.isBoss && dist2(e.x, e.z, at[0], at[1]) < 400) { e.x = e.home[0]; e.z = e.home[1]; e.state = 'return'; } e.aware = 0; if (e.state === 'chase') e.state = 'return'; });
     Player.init(S.look); Player.place(at[0], at[1], Math.PI); Player.hp = Player.maxHp(); this.spawnCrew(); Audio2.setRegionMusic(World.region.music); this.fade(1); this.setState('play'); },
   /* ---------------- opening cinematic ---------------- */
+  // Story, stated plainly: YOU are the signals operator of the five-person expedition vessel MERIDIAN. A distress signal in your own
+  // voice pulls the ship to Vesper-9. A storm kills the ship's comms; your capsule ejects; you crash alone and wake up.
   async intro() {
     const skip = !!Settings.v.seenIntro; this.skipFlag = false; $('skip').style.display = skip ? 'block' : 'none'; $('skip').onclick = () => { this.skipFlag = true; };
-    UI.hideAll(); this.fadeV = 1; this.fadeTo = 1; this.cinematic(true); this.setState('cine');
+    UI.hideAll(); this.fadeV = 1; this.fadeTo = 1; this.cinematic(true); this.setState('cine'); $('hud').style.display = 'none';
     const wait = s => new Promise(r => { const t0 = performance.now(); const f = () => { if (this.skipFlag || performance.now() - t0 > s * 1000) r(); else requestAnimationFrame(f); }; f(); });
-    await this.loadRegion(0); this.setState('cine'); this.cinematic(true); Audio2.stopMusic(); this.fadeV = 1; this.fadeTo = 1;
-    const text = t => { $('cinetext').textContent = t; };
-    // 1-3: darkness, static, a voice
-    this.sig = 1; Audio2.bed.static && Audio2.bed.static.g.gain.setTargetAtTime(.12, Audio2.now(), .5); await wait(2.2);
-    text('…if you\'re hearing this…'); Audio2.voice('if you are hearing this', 1, true); await wait(2.6);
-    text('…don\'t answer.'); Audio2.voice('dont answer', 1, true); await wait(2.6); text('');
-    // 4-5: fragmentary flashes of the world
-    const P = Player.ch; const flashes = [[[18, 4, -8], [12, 14, -20]], [[2, 1.2, 50], [6, .6, 44]], [[-24, 3, -26], [-30, 3, -36]], [[-10, 3, 18], [-18, 2, 6]], [[0, 26, -20], [0, -2, -48]]];
-    this.extraDraw = () => { if (this._flashI === 4) for (let i = 0; i < 3; i++) { A34.trs(_W, 0, -1, -48, this.time * (i + 1) * .3, Math.PI / 2 + i * .4, 0, 14 + i * 5, 14 + i * 5, .6); R.inst('cyl', _W, .3, .9, 1, 1, F_UNLIT); } };
-    K.silhouette(-30, -36, { r: 0.1 });
-    for (let i = 0; i < flashes.length && !this.skipFlag; i++) { this._flashI = i; Cam.play([{ t: 0, eye: flashes[i][0], at: flashes[i][1], fov: .8 }, { t: .7, eye: flashes[i][0].map((v, k) => v + (k === 1 ? .3 : .6)), at: flashes[i][1], fov: .75 }], null, { hold: true }); this.fadeV = 0; this.fadeTo = 0; this.sig = 1.2; Audio2.sfx('scan_ping'); await wait(.45); this.fadeV = 1; this.fadeTo = 1; await wait(.35); }
-    this.extraDraw = null;
-    // 6: title
-    $('chapa').textContent = ''; $('chapb').textContent = 'THE LAST FREQUENCY'; $('chapc').textContent = ''; $('chap').style.display = 'flex'; $('chap').style.opacity = 1; Audio2.motif(.5, .08); await wait(3.4); $('chap').style.display = 'none';
-    // 7-9: the planet, the storm, the approach, the failure
+    const text = (t, sub) => { $('cinetext').innerHTML = t ? `<div>${t}</div>` + (sub ? `<div style="font-size:.55em;color:var(--amber);letter-spacing:.3em;margin-top:10px">${sub}</div>` : '') : ''; };
+    const look = this.S.look; await this.loadRegion(0); this.setState('cine'); this.cinematic(true); $('hud').style.display = 'none'; Audio2.stopMusic(); this.fadeV = 1; this.fadeTo = 1;
+    this.W.tgt = REGIONS[0].weather[0]; this.W.cur = Object.assign({}, this.W.tgt); this.tod = .4; this.W.t = 1e9;
+    // 1 · darkness, static, the voice
+    this.sig = 1; Audio2.bed.static && Audio2.bed.static.g.gain.setTargetAtTime(.12, Audio2.now(), .5); await wait(1.6);
+    text('“If you\'re hearing this…”'); Audio2.voice('if you are hearing this', 1, true); await wait(2.4);
+    text('“…don\'t answer.”'); Audio2.voice('dont answer', 1, true); await wait(2.6); text(''); this.sig = 0;
+    // 2 · title
+    $('chapa').textContent = 'A SIGNAL FROM A WORLD THAT WENT SILENT'; $('chapb').textContent = 'THE LAST FREQUENCY'; $('chapc').textContent = ''; $('chap').style.display = 'flex'; $('chap').style.opacity = 1; Audio2.motif(.5, .08); await wait(3.6); $('chap').style.display = 'none';
     Audio2.setRegionMusic({ root: 82.4, scale: [0, 3, 7, 10], prog: [0, 2] }); Audio2.setMode('explore');
-    const ship = { x: 60, y: 60, z: 80 }; this.extraDraw = () => { const s = ship; const sh = Math.sin(this.time * 9) * .12 * (s.shake || 0); A34.trs(_W, s.x, s.y, s.z, -2.4, .2, sh, 3, 1.2, 7); R.inst('cube', _W, .7, .7, .72, 0, F_REFL); A34.trs(_W, s.x, s.y + .8, s.z, -2.4, .2, sh, 1.6, .8, 3); R.inst('cube', _W, .5, .5, .55, 0); A34.trs(_W, s.x, s.y, s.z, -2.4, .2, sh, 9, .2, 2.4); R.inst('cube', _W, .6, .6, .62, 0); for (let i = 0; i < 3; i++) Game.flashLight(s.x, s.y + 2, s.z, [1, .8, .6], 14, .02); A34.trs(_W, s.x + 2.5, s.y, s.z + 2.7, -2.4, 0, 0, .8, .8, .8); R.inst('oct', _W, 1, .6, .3, 1, F_UNLIT); if (s.fire) FX.spawn(s.x + 2.4, s.y, s.z + 2.6, (Math.random() - .5) * 2, 1, (Math.random() - .5) * 2, .6, 1.4, [1, .5, .2], true, 0); };
-    this.W.tgt = REGIONS[0].weather[3]; this.W.cur = Object.assign({}, this.W.tgt); this.tod = .27;
-    this.fadeTo = 0; this.fadeSpeed = .8; const sp = () => [ship.x, ship.y, ship.z]; Cam.play([{ t: 0, eye: () => [ship.x + 26, ship.y + 6, ship.z + 30], at: sp, fov: .8 }, { t: 9, eye: () => [ship.x + 14, ship.y + 3, ship.z + 18], at: sp, fov: .6 }], null, { hold: true });
-    const t0 = performance.now(); const fly = () => { const k = (performance.now() - t0) / 1000; ship.x = 60 - k * 9; ship.y = 60 - k * 4.5; ship.z = 80 - k * 10; if (k < 12 && !this.skipFlag) requestAnimationFrame(fly); }; fly();
-    text('VESPER-9 · EXPEDITION APPROACH'); await wait(3); text('');
-    this.lightning = 1; Audio2.sfx('thunder'); await wait(1.5); text('COMMUNICATION FAILURE'); this.sig = 1.5; ship.shake = 1; ship.fire = 1; Audio2.sfx('overheat'); for (let i = 0; i < 4; i++) Audio2.tone(880, .25, 'square', .05, { delay: i * .5 }); this.lightning = 1;
-    await wait(2.5); text('EMERGENCY LANDING'); Cam.play([{ t: 0, eye: Cam.eye.slice(), at: [ship.x, ship.y, ship.z], fov: .7 }, { t: 2, eye: [20, 30, 70], at: [2, 0, 58], fov: .8 }], null, { hold: true }); await wait(2.2);
-    Audio2.sfx('brute_slam'); Cam.shake(1); await this.fadeOut(.2, [1, 1, 1]); this.extraDraw = null; text(''); await wait(1);
-    // 10: waking up in the capsule
-    this.fadeCol = [0, 0, 0]; this.fadeV = 1; this.W.tgt = REGIONS[0].weather[1]; this.tod = .32; Audio2.setRegionMusic(REGIONS[0].music);
-    Player.init(this.S.look); Player.place(2.5, 55.5, Math.PI * .9); Player.ch.anim.kneel = 1; Audio2.sfx('heartbeat'); await wait(1);
-    this.fadeTo = 0; this.fadeSpeed = .4; Cam.play([{ t: 0, eye: [4.5, Player.y + .8, 53.5], at: [2.5, Player.y + .9, 55.5], fov: .6 }, { t: 4, eye: [6, Player.y + 2, 51], at: [2.5, Player.y + 1, 55.5], fov: .75 }], null, { hold: true });
-    await wait(2.2); Player.ch.anim.kneel = 0; this.say('radio', '…[static]… repeat, any survivors… [static]…', { radio: true }); await wait(2.5);
+    // 3 · the bridge of the MERIDIAN — meet the crew (the explorer is YOU, wearing your chosen look)
+    const BX = 0, BY = 260, BZ = 0; const crewDef = [['mara', 'MARA OKONKWO', 'EXPEDITION ENGINEER', -4], ['elias', 'ELIAS VANTERPOOL', 'RESEARCH SPECIALIST', -2], ['you', 'YOU', 'SIGNALS OPERATOR', 0], ['nova', 'NOVA ASHE', 'RECONNAISSANCE SPECIALIST', 2], ['orin', 'ORIN', 'SIGNAL TECHNICIAN', 4]];
+    const crew = crewDef.map(([id, , , x]) => { const c = makeChar(id === 'you' ? look : NPC_LOOKS[id]); c.x = BX + x; c.z = BZ; c.y = BY + .45; c.yaw = 0; c.anim.sit = 1; c.onGround = true; c.pose.plant = 0; return c; });
+    let alarm = 0, shipMode = false; const ship = { x: 0, y: 0, z: 0, yaw: -2.4, pitch: .35, shake: 0, fire: 0, capsule: null };
+    const W2 = [.62, .64, .68], D2 = [.3, .32, .38];
+    this.extraDraw = () => { const dt = this.dt || .016; const t = this.time;
+      if (!shipMode) {
+        R.box(BX, BY - .25, BZ + 1, 14, .5, 10, 0, [.42, .45, .5], 0, F_REFL); R.box(BX, BY + 4.8, BZ + 1, 14, .4, 10, 0, [.3, .33, .38]);
+        R.box(BX - 7, BY + 2.4, BZ + 1, .4, 5, 10, 0, W2); R.box(BX + 7, BY + 2.4, BZ + 1, .4, 5, 10, 0, W2); R.box(BX, BY + 2.4, BZ - 4, 14, 5, .4, 0, D2);
+        R.box(BX - 4.8, BY + 2.4, BZ + 5.5, 4.4, 5, .4, 0, W2); R.box(BX + 4.8, BY + 2.4, BZ + 5.5, 4.4, 5, .4, 0, W2); R.box(BX, BY + .4, BZ + 5.5, 5.2, 1.3, .4, 0, W2); R.box(BX, BY + 4.4, BZ + 5.5, 5.2, 1.0, .4, 0, W2);
+        R.box(BX, BY + 4.7, BZ + .5, 10, .1, .5, 0, [1, .95, .8], 1, F_UNLIT);
+        for (const [i, c] of crew.entries()) { const x = BX + crewDef[i][3]; R.box(x, BY + .55, BZ - .55, 1.1, .2, 1, 0, [.25, .27, .3]); R.box(x, BY + 1.1, BZ - 1, 1, 1.1, .2, 0, [.25, .27, .3]); R.box(x, BY + .75, BZ + 1.6, 1.6, .7, .9, 0, [.3, .33, .38]);
+          const act = i === 2 || alarm > 0; R.box(x, BY + 1.12, BZ + 1.62, 1.3, .06, .6, 0, alarm > 0 && Math.sin(t * 8) > 0 ? [1, .25, .2] : [.4, .9, 1], act ? 1 : .35, F_UNLIT);
+          c.anim.talk = 0; Anim.update(c, dt); drawHumanoid(c, {}); }
+        this.flashLight(BX, BY + 3.6, BZ, alarm > 0 && Math.sin(t * 8) > 0 ? [1, .3, .25] : [1, .95, .85], 22, .05); this.flashLight(BX, BY + 2, BZ - 2, [.7, .85, 1], 14, .05);
+      } else {
+        const sp = A34.trs(mp(), ship.x, ship.y, ship.z, ship.yaw, ship.pitch, Math.sin(t * 9) * .12 * ship.shake, 1, 1, 1);
+        part(sp, 0, 0, 0, 3.2, 1.6, 11, [.74, .75, .78], 0, F_REFL); part(sp, 0, .05, 6.4, 2.4, 1.3, 2.4, [.84, .85, .88], 0, 0, 'cone' === 'x' ? 'cone' : 'cube'); part(sp, 0, .9, 3, 2.2, .7, 3, [.2, .55, .75], .6, F_REFL);
+        part(sp, 0, 0, 0, 11, .25, 4.2, [.58, .6, .64], 0, F_REFL); part(sp, 0, 1.2, -4.5, .35, 2.4, 2.2, [.5, .52, .56]); part(sp, -1.3, 0, -6, 1.3, 1.3, 1.6, [1, .55, .2], 1, F_UNLIT); part(sp, 1.3, 0, -6, 1.3, 1.3, 1.6, [1, .55, .2], 1, F_UNLIT);
+        part(sp, 0, 1.0, 0, 1.2, .05, 5, [1, .3, .2], alarm > 0 && Math.sin(t * 8) > 0 ? 1 : .1, F_UNLIT);
+        if (ship.fire && Math.random() < .8) { const e = A34.pt(sp, 0, 0, -7); FX.spawn(e[0], e[1], e[2], (Math.random() - .5) * 2, 1, (Math.random() - .5) * 2, 1, 1.6, [1, .5, .2], true, -.1); }
+        if (!ship.capsule) { const e = A34.pt(sp, 0, 0, -7); FX.spawn(e[0], e[1], e[2], 0, 0, 0, .5, 1.3, [1, .7, .3], true, 0); } this.flashLight(ship.x, ship.y + 3, ship.z, [1, .85, .7], 30, .05);
+        const cp = ship.capsule; if (cp) { const c2 = A34.trs(mp(), cp.x, cp.y, cp.z, cp.yaw, cp.pitch, 0, 1, 1, 1); part(c2, 0, 0, 0, 1.6, 1.6, 3.2, [.7, .7, .72], 0, F_REFL); part(c2, 0, .2, 1.7, 1.2, 1.2, 1.2, [.5, .5, .55]); part(c2, 0, .2, 0, 1.7, .5, 1.7, [1, .3, .2], .9, F_UNLIT);
+          for (let k = 0; k < 4; k++) FX.spawn(cp.x + (Math.random() - .5), cp.y + 1, cp.z + (Math.random() - .5), (Math.random() - .5), 3 + Math.random() * 2, (Math.random() - .5), 1.4, 2, [1, .5 + Math.random() * .3, .2], true, -.1); this.flashLight(cp.x, cp.y, cp.z, [1, .6, .3], 22, .05); }
+      } };
+    const sc = (x, y, z, fov = .6) => ({ eye: [x, y, z], fov });
+    const shot = (eyeF, atF, dur, fov = .6) => Cam.play([{ t: 0, eye: eyeF, at: atF, fov }, { t: dur, eye: eyeF, at: atF, fov }], null, { hold: true });
+    this.fadeTo = 0; this.fadeSpeed = 1.2; this.fadeV = 1;
+    text('EXPEDITION VESSEL MERIDIAN', 'CREW OF FIVE · BOUND FOR VESPER-9'); Cam.play([{ t: 0, eye: [BX - 5, BY + 3, BZ - 3.4], at: [BX, BY + 1.6, BZ + 3], fov: .75 }, { t: 6, eye: [BX + 5, BY + 3, BZ - 3.4], at: [BX, BY + 1.6, BZ + 3], fov: .75 }], null, { hold: true }); Audio2.sfx('machine'); await wait(3.4);
+    for (let i = 0; i < crewDef.length && !this.skipFlag; i++) { const [id, name, role, x] = crewDef[i]; text(name, role); const ch = crew[i]; shot([BX + x + .6, BY + 1.55, BZ + 4.2], [BX + x, BY + 1.45, BZ], 2.4, .38); if (id === 'you') { ch.anim.talk = 0; Audio2.motif(1, .04); } await wait(id === 'you' ? 3 : 2); }
+    // 4 · the signal arrives
+    text('A SIGNAL ARRIVES', 'SURFACE OF VESPER-9 · SOURCE UNKNOWN'); shot([BX, BY + 2.6, BZ - 3.8], [BX, BY + 1.5, BZ + 4], 5, .85); this.sig = 1; Audio2.sfx('scan_ping'); Audio2.sfx('log'); await wait(2);
+    this.say('radio', '…if you\'re hearing this… don\'t answer…', { radio: true }); await wait(3.2); text(''); this.sig = .4;
+    this.say('mara', 'Operator… that\'s coming from the surface. Nobody should be down there.'); crew[0].anim.talk = 1; shot([BX - 1.5, BY + 1.7, BZ + 3.4], [BX - 3, BY + 1.5, BZ], 3, .5); await wait(3.6); crew[0].anim.talk = 0;
+    this.say('orin', 'It\'s repeating. Every three hundred and twelve seconds.'); this.sig = 0; await wait(2.8);
+    // 5 · the approach, the storm, the failure
+    shipMode = true; this.W.tgt = REGIONS[0].weather[3]; this.W.cur = Object.assign({}, this.W.tgt); this.tod = .33; ship.x = 50; ship.y = 70; ship.z = 90; ship.yaw = -2.5; ship.pitch = .18;
+    const t0 = performance.now(); let flying = true; const fly = () => { if (!flying) return; const k = (performance.now() - t0) / 1000; if (!ship.capsule) { ship.x = 50 - k * 6; ship.y = 70 - k * 2; ship.z = 90 - k * 8; } if (k < 40 && !this.skipFlag) requestAnimationFrame(fly); }; fly();
+    this.fadeCol = [0, 0, 0]; const shipAt = () => [ship.x, ship.y, ship.z];
+    text('VESPER-9', 'A STORM-WRAPPED WORLD · COMMUNICATIONS ARRAY: ONLINE'); Cam.play([{ t: 0, eye: () => [ship.x + 17, ship.y + 4, ship.z + 13], at: shipAt, fov: .8 }, { t: 12, eye: () => [ship.x + 11, ship.y + 3, ship.z + 8], at: shipAt, fov: .75 }], null, { hold: true }); await wait(3.6);
+    this.lightning = 1; Audio2.sfx('thunder'); ship.shake = 1; await wait(1); this.lightning = 1; Audio2.sfx('thunder'); await wait(1.2);
+    alarm = 1; ship.fire = 1; this.sig = 1.5; text('COMMUNICATION FAILURE', 'MERIDIAN · ALL CHANNELS DOWN'); for (let i = 0; i < 5; i++) Audio2.tone(880, .25, 'square', .05, { delay: i * .5 }); Audio2.sfx('overheat'); await wait(3.4);
+    this.say('mara', '(over comms) We\'re losing the ship! Operator — get to the capsule!', { radio: true }); await wait(2.8);
+    // 6 · your capsule ejects and falls
+    text('YOUR CAPSULE EJECTS', 'THE MERIDIAN AND ITS CREW ARE LOST IN THE STORM'); ship.capsule = { x: ship.x, y: ship.y - 2, z: ship.z, yaw: -2.5, pitch: 1, vy: 0 }; Audio2.sfx('burst'); Cam.shake(.6);
+    const cp = ship.capsule; const ct0 = performance.now(), cs = [cp.x, cp.y, cp.z], ce = [3, World.hf.at(3, 58) + 1, 58];
+    Cam.play([{ t: 0, eye: () => [cp.x + 9, cp.y + 3, cp.z + 8], at: () => [cp.x, cp.y, cp.z], fov: .8 }, { t: 14, eye: () => [cp.x + 7, cp.y + 3, cp.z + 9], at: () => [cp.x, cp.y - 1, cp.z], fov: .8 }], null, { hold: true });
+    await new Promise(r => { const f = () => { const k = Math.min(1, (performance.now() - ct0) / 6500); const e = k * k; cp.x = lerp(cs[0], ce[0], e); cp.y = lerp(cs[1], ce[1], e); cp.z = lerp(cs[2], ce[2], e); if (k < 1 && !this.skipFlag) requestAnimationFrame(f); else r(); }; f(); });
+    flying = false; this.skipFlag ? 0 : (Audio2.sfx('brute_slam'), Cam.shake(1)); await this.fadeOut(.2, [1, 1, 1]); shipMode = false; this.extraDraw = null; text(''); await wait(.6);
+    // 7 · you wake in the wreck of your capsule
+    this.fadeCol = [0, 0, 0]; this.fadeV = 1; this.W.tgt = REGIONS[0].weather[1]; this.W.cur = Object.assign({}, this.W.tgt); this.tod = .37; Audio2.setRegionMusic(REGIONS[0].music);
+    Player.init(look); Player.place(2.5, 55.5, Math.PI * .9); Player.ch.anim.kneel = 1; Audio2.sfx('heartbeat'); await wait(1.2);
+    this.fadeTo = 0; this.fadeSpeed = .45; Cam.play([{ t: 0, eye: [4.5, Player.y + .8, 53.5], at: [2.5, Player.y + .9, 55.5], fov: .6 }, { t: 5, eye: [6.5, Player.y + 2.2, 51], at: [2.5, Player.y + 1, 55.5], fov: .75 }], null, { hold: true });
+    text('VESPER-9 · ASHEN FRONTIER', 'YOU SURVIVED. YOU ARE ALONE.'); await wait(3); Player.ch.anim.kneel = 0; text('');
+    this.say('you', 'Mara? Elias? …Nova, Orin — anyone?'); await wait(2.4); this.say('radio', '…[static]… repeat… don\'t… answer…', { radio: true }); await wait(2.4);
     Settings.v.seenIntro = true; Settings.save(); $('skip').style.display = 'none'; Cam.cine = null; Cam.beginTrans(); this.cinematic(false); this.extraDraw = null; Player.ch.anim.kneel = 0; this.sig = 0; text('');
-    Player.place(2.5, 55.5, Math.PI * .9); this.startPlay(); this.save('auto', true);
-    if (Settings.v.tutorial) setTimeout(() => this.say('sys', Input.device === 'touch' ? 'Left stick to move. Drag right side to look. CAM switches views.' : Input.device === 'pad' ? 'Left stick: move · Right stick: camera · D-pad ↓: change camera' : `WASD to move · [${Input.glyph('camera')}] cycles 8 camera views · [${Input.glyph('interact')}] interacts`), 4500);
+    Player.place(2.5, 55.5, Math.PI * .9); this.W.t = 60; this.startPlay(); this.save('auto', true);
+    setTimeout(() => this.say('sys', 'OBJECTIVE: find your crew — Mara, Elias, Nova, Orin — and the source of the signal.'), 1800);
+    if (Settings.v.tutorial) setTimeout(() => this.say('sys', Input.device === 'touch' ? 'Left stick: move · drag the right side: look · CAM button: change view' : Input.device === 'pad' ? 'Left stick: move · Right stick: camera · D-pad ↓: change camera' : `WASD to move · [${Input.glyph('camera')}] changes the camera · [${Input.glyph('interact')}] interacts`), 6500);
   },
   /* ---------------- endings ---------------- */
   async ending(k) {

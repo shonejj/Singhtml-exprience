@@ -90,7 +90,7 @@ const DLG = {
 /* ---- quests (main per chapter + side quests) ---- */
 const QUESTS = [
   { id: 'q1', ch: 0, main: true, title: 'Signalfall', steps: [
-    { t: 'Leave the crash site', on: 'reach_site', at: [10, 44] }, { t: 'Recover the communication equipment from the drop pod', on: 'cache_scanner', at: [14, 40] },
+    { t: 'Find your crew and the source of the signal — start by leaving the wreck', on: 'reach_site', at: [10, 44] }, { t: 'Recover the communication equipment from the drop pod', on: 'cache_scanner', at: [14, 40] },
     { t: 'Hold [scan] to pulse the frequency scanner', on: 'scan' }, { t: 'Follow the signal to the survey outpost', on: 'reach_outpost', at: [-16, 8] },
     { t: 'Search the outpost', on: 'cache_burst', at: [-20, 9.5] }, { t: 'Reach the relay tower', on: 'reach_tower', at: [12, -20] }, { t: 'Tune the relay to the source frequency', on: 'puzzle_relay1', at: [13.5, -18] },
     { t: 'Find the voice in the crater', on: 'boss_guardian', at: [0, -46] }, { t: 'Talk to the survivor', on: 'talk_mara1', check: () => flag('mara_joined'), at: [8, -32] }, { t: 'Head north with Mara', on: 'exit', at: [0, -66] }] },
